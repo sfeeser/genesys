@@ -3,42 +3,35 @@ package main
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
-	"time"
 
 	"github.com/spf13/cobra"
 )
 
-var (
-	genomePath  string
-	projectPath string
-	specPath    string
-	auditUnix   int64
-)
-
-var rootCmd = &cobra.Command{
-	Use:   "genesis",
-	Short: "The Code Genome Engine",
-	PersistentPreRun: func(cmd *cobra.Command, args []string) {
-		// CHAPTER 15: CLOCK INJECTION
-		auditUnix = time.Now().UTC().Unix()
-	},
-}
-
-func init() {
-	rootCmd.PersistentFlags().StringVarP(&genomePath, "genome", "g", "genome.db", "Path to Registry")
-	rootCmd.PersistentFlags().StringVarP(&projectPath, "path", "p", ".", "Target Project Root")
-	rootCmd.PersistentFlags().StringVarP(&specPath, "spec", "s", "genesis.yaml", "Path to Specbook")
-}
-
+// Execute is the entry point called by main.go
 func Execute() {
-	// CHAPTER 14.3: CONTEXT OWNERSHIP (Root Level)
+	// CHAPTER 14.3: Root-level Context Ownership
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
 	if err := rootCmd.ExecuteContext(ctx); err != nil {
-		os.Exit(1)
+		code := 1 // Default: Panic/General Failure
+
+		// CHAPTER 14.4: DETERMINISTIC EXIT CODES (Typed Switch)
+		switch {
+		case errors.Is(err, ErrDeterminantMissing):
+			code = 2
+		case errors.Is(err, ErrAccessDenied):
+			code = 126
+		case errors.Is(err, context.Canceled), errors.Is(err, context.DeadlineExceeded):
+			code = 130
+		}
+
+		fmt.Fprintf(os.Stderr, "GENESIS ERROR: %v\n", err)
+		os.Exit(code)
 	}
 }
