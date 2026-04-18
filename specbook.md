@@ -234,8 +234,44 @@ The pipeline is a **Unidirectional State Machine**. While the CRA may iterate wi
 Most AI tools try to go from **State 1 to State 5** in one jump. That’s why they break. Genesis forces a "Pause" at **State 3 (Anchored)**. By locking the contracts before writing the logic, we ensure that the "Physics" of the system is solved before we ever spend a single token on the "Brain."
 
 
+# **Chapter 4: The Telemetry of Transformation**
+
+While the Registry Engine enforces the "Hard Physics" of the project, the **Kinetic Canvas** provides the "Nervous System" feedback. This chapter defines how the visual layer interprets the five states of the Metamorphosis Pipeline to provide real-time, diagnostic telemetry.
+
+## **4.1. Visual State Mapping (The Maturity Spectrum)**
+The Canvas does not render static boxes; it renders **Maturity Velocity**. Each node's visual signature is a direct reflection of its `maturity` column in the SQLite `nodes` table.
+
+| Pipeline State | Canvas Representation | Diagnostic Meaning |
+| :--- | :--- | :--- |
+| **1: Conceptual** | **Ghost Node (Dashed White)** | **Intent Only.** The node exists in the `nodes` table as a spec but has no physical footprint in the VFS. |
+| **2: Hollow** | **Translucent White (Pulsing)** | **Skeleton Phase.** The node has a C-ID (Contract) and exists as a stub. Pulse frequency reflects iteration pressure. |
+| **3: Anchored** | **Blue Halo (Static)** | **Signature Lock.** The API is frozen. This node is now a fixed constraint for all surrounding logic. |
+| **4: Hydrating** | **Yellow Core (Vibrating)** | **Active Synthesis.** The CRA is injecting logic and running the **Hexagonal Gates** (C, D). |
+| **5: Sequenced** | **Green Solid (Static)** | **Equilibrium.** L-ID and D-ID are locked. The node is materialized to disk. |
+
+## **4.2. Kinetic Telemetry & Solver Feedback**
+To prevent the "Black Box" problem common in AI tools, the Canvas uses kinetic physics to reveal what the **Convergence Controller (CRA)** is doing under the hood.
+
+### **A. The Sovereignty Shockwave**
+When a node transitions from **Hollow** to **Anchored**, it emits a visual "ripple" across its dependency edges. This informs the developer that a contract has been locked and any "Subject" nodes downstream must now warp their logic to satisfy this new sovereign constraint.
+
+### **B. The SCC Swarm (Atomic Vibration)**
+When the engine identifies a **Strongly Connected Component**, the affected nodes visually clump into a **Blob**. 
+* **Coordinated Vibration:** During the **Hydrating** state, the entire Blob vibrates in unison. 
+* **The Deadlock Signal:** If the Vibration Amplitude increases without a change in State, it signifies a **Logic Deadlock**, indicating the CRA is thrashing between incompatible constraints within the cycle.
 
 
+### **C. Tension Lines (Constraint Mapping)**
+Edges between nodes are rendered as "Tension Lines" that change color based on the **Acceptance Envelope** status:
+* **Red (High Tension):** Gate A or B failure (Type/Contract mismatch).
+* **Orange (Medium Tension):** Gate C or D failure (Logic/Compilation mismatch).
+* **Blue/Green (Locked):** Constraints satisfied.
+
+## **4.3. User Interpretation Model**
+The Canvas is designed for "At-a-Glance" troubleshooting:
+* **Blobs:** Tightly coupled regions that must evolve together.
+* **Vibration:** Active work or instability. If it doesn't stop, the spec is likely **UNSAT**.
+* **Pulse:** The "Heartbeat" of the solver. If the pulse stops but the node is not Green, the process has **STALLED**.
 
 
 
