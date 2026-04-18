@@ -147,3 +147,23 @@ func (r *Registry) GetNodeWithAuthority(nodeID string) (identity.IdentityQuad, s
 
 	return q, maturity, authClass, nil
 }
+
+// [L2 PATCH] Add to internal/registry/registry.go
+// ListAllNodeIDs retrieves the full set of established node identities.
+func (r *Registry) ListAllNodeIDs() ([]string, error) {
+	rows, err := r.db.Query("SELECT node_id FROM nodes")
+	if err != nil {
+		return nil, fmt.Errorf("registry: query failure: %w", err)
+	}
+	defer rows.Close()
+
+	var ids []string
+	for rows.Next() {
+		var id string
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		ids = append(ids, id)
+	}
+	return ids, nil
+}
