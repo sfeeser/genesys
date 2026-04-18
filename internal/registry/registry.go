@@ -167,3 +167,15 @@ func (r *Registry) ListAllNodeIDs() ([]string, error) {
 	}
 	return ids, nil
 }
+
+// [L2 PATCH] internal/registry/registry.go
+var ErrNodeNotFound = fmt.Errorf("registry: node not found")
+
+// GetNodeWithAuthority (Updated for stable error contract)
+func (r *Registry) GetNodeWithAuthority(nodeID string) (identity.IdentityQuad, string, int, error) {
+    // ... (existing scan logic)
+    if err == sql.ErrNoRows {
+        return identity.IdentityQuad{}, "", 0, ErrNodeNotFound
+    }
+    // ...
+}
