@@ -1,3 +1,16 @@
+# Genesis Engine v7.0 
+
+Chapter 1: The Manifesto  
+Chapter 2: The SQLite Registry  
+Chapter 3: The Metamorphosis Pipeline  
+Chapter 4: The Telemetry of Transformation  
+Chapter 5: The Surgical Inner Loop  
+Chapter 6: The Hexagonal Gates  
+Chapter 7: The Canvas  
+Chapter 8: The Mechanical Delivery  
+Chapter 9: The Agentic Loop  
+Chapter 10: The Greenfield Protocol  
+
 # **Chapter 1: The Genesis Manifesto (v7.0 - RELEASE)**
 
 ## **1.1. The Genesis Value Proposition**
@@ -359,25 +372,199 @@ The gates are ordered by **Computational Cost**. Gate A (Fast AST check) happens
 
 
 
+# **Chapter 7: The Canvas (Observational Authority)**
+
+The Canvas is the primary interface for **Observational Authority**. It renders a **Convergence Graph** derived directly from the Registry’s `edges` and `scc_cluster_members` tables. 
+
+### **The "Why" for the Developer**
+The Canvas turns "Debugging" into "Observing." Instead of tailing logs, the developer watches the DAG. If the vibration starts to climb and the Tension Lines turn red, the developer knows exactly where the architecture is fighting its own constraints.
+
+## **7.1. The Convergence Graph (SCC Compression)**
+To manage the "Cognitive Explosion" of 10,000 nodes, the Canvas uses **SCC Compression**:
+* **The Blob:** Tightly coupled cyclic regions (Strongly Connected Components) are visually grouped into singular, translucent "Blobs."
+* **The Intra-Cluster View:** Clicking a Blob expands it to reveal the internal nodes and their local cycle logic.
+* **The External Boundary:** Edges pointing to standard libraries or external modules are rendered as "Anchors" at the edge of the Canvas, visually grounding the local project to its environment.
+
+## **7.2. Kinetic Telemetry (The Solver's Heartbeat)**
+The Canvas uses a physical engine to represent the invisible work of the **Convergence Controller (CRA)**.
+
+### **A. Vibration (Entropy & Thrashing)**
+Vibration represents the delta between current code and the **Hexagonal Envelope**.
+* **High Amplitude:** The node is failing **Gate A (Physics)** or **Gate D (Compilation)**. The solver is rapidly iterating.
+* **Low Amplitude:** The node has passed structural gates and is fine-tuning **Gate C (Behavior)**.
+* **Stasis:** The node has hit **Equilibrium** (State 5: Sequenced).
+
+### **B. Pulsing (Iteration Pressure)**
+The "Pulse" is the engine's heartbeat. 
+* **Rapid Pulse:** High retry density. The CRA is burning tokens/compute to resolve a complex conflict.
+* **Flatline:** If a node is not Green but the pulse stops, the engine has **STALLED**.
+
+## **7.3. Tension Lines (Edge Pressure)**
+Edges are rendered as elastic "Tension Lines" that communicate the status of **Typed Dependencies**.
+* **Type-Mismatched (Red Tension):** The line appears taught and red, pulling the source and target nodes together. This indicates a **Contract-ID** mismatch.
+* **Logic-Incompatible (Orange Tension):** The line vibrates, indicating that while the signatures match, the **Behavioral Invariants** (Gate C) are failing across the boundary.
+* **Satisfied (Green/Blue):** The line is relaxed and stable.
+
+## **7.4. The Sovereignty Shockwave**
+When a node is assigned **Class-0 Authority** or reaches **State 3 (Anchored)**, it emits a visual "Shockwave." 
+* This wave ripples through the **Tension Lines**, visually updating the maturity of downstream "Subject" nodes. 
+* It serves as a warning: the "Sovereign" node is now a fixed point in the universe; all other nodes must bend their logic to satisfy its contract.
+
+## **7.5. The Gate Overlay**
+When the user hovers over a vibrating node, a hexagonal HUD appears, showing the status of the six **Hexagonal Gates**.
+* **Gates A-B (Structural):** Pulse at the top.
+* **Gates C-D (Functional):** Pulse in the center.
+* **Gates E-F (Architectural):** Pulse at the bottom.
+* This allows the developer to instantly see *why* a node is stuck: *"It's compiling (Gate D), but it's failing the Behavioral Invariants (Gate C)."*
+
+
+# **Chapter 8: The Mechanical Delivery (Localhost Sovereignty)**
+
+Genesis is delivered as a local-first service. It is a **Project-Level Daemon** that runs in your workspace, ensuring your code, your registry, and your intent never leave your machine.
+
+## **8.1. The Genesis Daemon (`genesis serve`)**
+The engine is a self-contained Go binary. When executed, it launches a high-performance HTTP/2 and WebSocket server on `localhost:8080`.
+
+* **The Concurrent Registry (WAL Mode):** The server operates the `.genesis/genome.db` in **Write-Ahead Logging (WAL)** mode. This allows the **CRA Solver** to execute heavy write-transactions for mutation worksets without blocking the **Canvas UI** from reading the current graph state.
+* **Virtual Loom:** It initializes an in-memory VFS (Virtual File System) to stage "Hydration" (State 4) code before it is committed to the physical disk.
+* **Toolchain Bridge:** The server manages a throttled worker pool for the `go` compiler and `test` runners, ensuring that background "Gate" checks do not starve the local UI thread.
+
+## **8.2. The Event Sequencer (UI Propagation)**
+To ensure the Canvas provides a diagnostic-grade view of the solver, the server acts as a **State Aggregator**. 
+
+* **Ordered Guarantees:** The server utilizes an internal event queue to ensure that "Gate A" passes are never rendered after a "Gate B" failure for the same node. The UI always reflects a linear, logical progression of the **Metamorphosis Pipeline**.
+* **Event Coalescing & Debouncing:** During high-velocity solver cycles, the server coalesces rapid updates into **60Hz UI Frames**. This prevents WebSocket saturation and ensures the "Vibration" and "Pulse" on the Canvas remain fluid and meaningful.
+
+## **8.3. The WebSocket Pulse (Real-time Diagnostics)**
+The link between the **Registry Engine** and the **Canvas** is a bi-directional WebSocket stream.
+* **The Telemetry Stream:** Streams node maturity changes, gate status, and "Kinetic Tension" levels.
+* **The Control Backchannel:** Allows the user to "Intervene" via the browser, pausing the solver or manually anchoring a node's contract.
+
+## **8.4. The Lifecycle of a Request**
+1.  **Intent:** You run `genesis draft "Add health-check endpoint"` in your terminal.
+2.  **Ingestion:** The Go daemon identifies the target package via the SQLite index.
+3.  **Visualization:** The Localhost UI instantly centers the Canvas on the affected **SCC Cluster**, which begins to **Pulse** in white.
+4.  **Verification:** As you approve the plan, the server initiates the **Metamorphosis Pipeline**. You watch the nodes **Vibrate** in yellow as the gates are tested.
+5.  **Materialization:** Upon successful **Sequencing**, the server performs the **Atomic Swap** to disk and updates the **Canonical YAML Export**.
+
+## **8.5. Security & Privacy Model**
+* **Zero-Exfiltration:** No code is transmitted to any cloud. If an external LLM provider is used, only the **Surgery Fragment** and its **Contract Context** are sent.
+* **Localhost Binding:** The server binds strictly to `127.0.0.1`. It is inaccessible from the external network, preserving the "Sovereignty" of the project.
 
 
 
 
 
 
+# **Chapter 9: The Agentic Loop (The CRA Solver)**
+
+The **Convergence Controller (CRA)** is the reasoning engine of Genesis. It manages the iterations within the **Metamorphosis Pipeline**, specifically during the **PLAN** and **HYDRATING** stages. Its goal is to reach an equilibrium where the code satisfies both the **Specbook's Intent** and the **Registry's Physics**.
+
+## **9.1. The Bounded Reasoning Cycle**
+The CRA operates within a **Closed-Loop Feedback System**. Every suggestion must pass through a "Formal Filter" before it is considered for the **Mutation Workset**.
+1.  **Proposal:** The agent suggests a mutation based on the **Gene**.
+2.  **Simulation:** The mutation is staged in the **VFS**.
+3.  **Audit:** The **Hexagonal Envelope** (Gates A & B) evaluates the physics.
+4.  **Termination:** If equilibrium is not reached within $N$ cycles, the CRA triggers a **Controlled Exit**.
+
+## **9.2. Sovereignty-Driven Resolution**
+The solver uses **Authority Classes** to decide which node must "warp" during a conflict.
+* **Class 0 (Immutable):** Fixed points. The CRA must solve around these.
+* **Class 2 (Negotiable):** Plastic nodes. The CRA prioritizes mutating these to satisfy constraints.
+* **Topology Shifts:** If two Class-0 nodes are incompatible, the CRA suggests an **Adapter** or **Shim** rather than violating a contract.
+
+## **9.3. The Friendly Panic: Failure Taxonomy**
+The CRA is designed to be a "Trust Surface." It distinguishes between **Intentional Contradictions** and **Systemic Violations**.
+
+### **A. Specbook Panic (UNSAT)**
+* **Nature:** The solver behaved correctly, but the user's requirements are logically impossible under Go's type physics.
+* **Canvas UX:** The affected nodes turn **Static Orange**. The **Minimal Conflict Set (MCS)** is highlighted with "Tension Lines" showing exactly where the logic breaks.
+* **Response:** The system offers "Relaxation Paths" (e.g., *"Interface X expects a String, but Struct Y provides an Int. Would you like to update the Interface?"*).
+
+### **B. Engine Panic (Invariant Violation)**
+* **Nature:** The system has detected a violation of its own internal guarantees (e.g., a Replay Mismatch, an SCC Atomicity failure, or a D-ID drift).
+* **Canvas UX:** The entire Canvas **Freezes and Desaturates**. A "Hard Lock" icon appears on the Registry Engine status.
+* **Response:** The solver halts immediately. The system provides a **Reproducibility Hook** and a snapshot of the last valid Registry state. This is a "Stop the Line" moment for the machine.
+
+## **9.4. The Cost Function (Architectural Parsimony)**
+To prevent "Over-Engineering," the CRA applies a **Complexity Tax**:
+* **New Node Penalty:** Discourages creating unnecessary abstractions.
+* **Signature Mutation Penalty:** Favors logic changes over breaking API contracts.
+* **Reuse Reward:** Incentivizes the agent to utilize existing nodes in the **Genome**.
+
+## **9.5. SCC Batch Reasoning**
+For nodes within an **SCC**, the CRA provides the agent with the **Entire Cluster Context**. The agent must provide a valid mutation for the entire cycle simultaneously. On the Canvas, this is visualized as the **SCC Swarm** vibrating until all members of the cycle pass the **Hexagonal Gates** in the same transaction.
 
 
+# **Chapter 10: The Unidirectional User Interface (The Greenfield Protocol)**
 
+The Genesis UI is the **Control Surface** for the Project. It is designed to minimize cognitive load by separating **Architectural Intent** from **Surgical Execution**. It follows a "Fire and Observe" model, where the user defines the destination and the engine navigates the physical terrain of the code.
 
+## **10.1. The Greenfield Protocol: Spawning Life from Intent**
+To bootstrap or evolve a project, the user provides the **Soul** (Vision), the **Physics** (Specbook), and a target.
 
+```bash
+./saayn genesis -v vision.md -s specbook.yaml --target ./my-app
+```
 
+## **10.2. The 5-State Genome State Machine**
+The UI reflects the **Metamorphosis Pipeline** state, enforcing strict guardrails to prevent "vibe-coding" drift.
 
+| Genome State | Action & Focus | Agent Guardrails |
+| :--- | :--- | :--- |
+| **1. Conceptual** | Defines the "Gallery" (Purpose). | **No Code Allowed.** Agent must reject Go logic. |
+| **2. Hollow** | Generates the "Canvas" (Stubs). | **Zero-Logic Rule.** No `if`, `for`, or assignments. |
+| **3. Anchored** | **The Signature Lock.** | **Contract Freeze.** Registry forbids signature changes. |
+| **4. Hydrating** | The **Surgical Phase** (Logic). | **Isolation.** Cannot call nodes still in State 1. |
+| **5. Sequenced** | **Equilibrium** (Materialized). | **Hash Locking.** D-ID/L-ID committed to SQLite. |
 
+## **10.3. The Mechanical Trace (CLI Observability)**
+The CLI provides a high-fidelity "Nervous System" trace. It isn't just logging; it's proving the **Hexagonal Gates** are opening and closing.
 
+```plaintext
+🧬 PHASE 0: CONTEXTUAL INGESTION
+--------------------------------------------------------------------------------
+📄 Vision:   'Distributed Worker' intent identified in vision.md
+📜 Physics:  12 Nodes identified in specbook.yaml
+🏗️ Build Order: [model] -> [registry] -> [worker] -> [main]
 
+🌱 MATERIALIZING GENOME (SURGICAL INNER LOOP ACTIVE)
+--------------------------------------------------------------------------------
+[03/12] PROCESSING: internal/worker/worker.go
 
+    🔬 DRAFTING: Initializing node 'saayn.Worker.Start'...
+    
+    ⚖️  GATE A (PHYSICS): Walking via go/ast...
+       ├─ Syntax Check... ✅
+       └─ Interface Check (Worker)... ✅
 
+    🧠 GATE B (IDENTITY): Checking against Signature Lock...
+       └─ ✅ Match: func(context.Context) error
 
+    🔧 REMEDIATION (Iteration 1/3):
+       ├─ 🚩 FINDING: "Logic uses time.Sleep. Vision requires context-aware cancellation."
+       ├─ Applying AST Patch...
+       └─ Re-verifying Physics... ✅
+
+    💾 COMMIT: Writing to Registry (Sequenced)...
+       └─ ✅ Logic Hash: d4e5f6 | D-ID: locked-env-v1
+```
+
+## **10.4. The Trust Surface: Handling Panics**
+The UI distinguishes between the developer's "Human Errors" and the engine's "Systemic Failures."
+
+### **A. Specbook Panic (The UNSAT Wall)**
+* **Scenario:** The vision.md and specbook.yaml are logically incompatible.
+* **UI Response:** "Your constraints cannot be satisfied as written." The CLI highlights the **Minimal Conflict Set** (MCS).
+* **Tone:** Collaborative. "We hit a wall. Here is where the physics breaks."
+
+### **B. Engine Panic (Invariant Violation)**
+* **Scenario:** The engine detected a "Physics Break" (e.g., L-ID mismatch or SCC atomicity failure).
+* **UI Response:** **HARD STOP.** The Canvas desaturates. The Registry locks.
+* **Tone:** Serious. "The engine detected a violation of its own guarantees. Snapshotting state for recovery."
+
+## **10.5. Short-Term Memory Preservation**
+Genesis treats the **Registry Engine** and the **CLI Log** as its persistent memory. Because every node is anchored by a **Logic Hash**, the agent never "forgets" where it is. If the process is killed, pointing SAAYN back at the `.genesis/genome.db` allows it to resume exactly one hash after the last successful sequence.
 
 
 
