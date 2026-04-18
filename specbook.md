@@ -183,9 +183,55 @@ To guarantee SCC atomicity and environment safety:
     * **Atomic Flush:** Only upon 100% SCC completeness and **Hexagonal Gate** approval is the workset flushed to the `nodes` table.
 
 
+# **Chapter 3: The Metamorphosis Pipeline**
+
+The pipeline is a **Unidirectional State Machine**. While the CRA may iterate within a state, a node only moves forward once it clears the specific **Hexagonal Gates** associated with that transition.
+
+## **3.1. State 1: Conceptual (The Gallery)**
+* **Definition:** The node exists only as a **PublicID** and a **Gene** (Spec) in the `nodes` table.
+* **Goal:** Define the "Business Purpose" and boundary.
+* **Exit Gate:** Semantic Indexing. The node must be "Enriched" and searchable in the `semantic_index`.
+* **Registry State:** `maturity = 'draft'`.
+
+## **3.2. State 2: Hollow (The Canvas)**
+* **Definition:** The **C-ID (Contract)** is generated. The node has a Go signature but no body (it returns a default or panics).
+* **Goal:** Establish the "Skeleton" of the package.
+* **The Virtual Loom:** All Hollow nodes are staged in the **VFS (Virtual File System)**.
+* **Exit Gate (Gate A):** The VFS package must pass `go/types` check. All interfaces must be satisfied by these stubs.
+* **Registry State:** `maturity = 'hollow'`.
+
+## **3.3. State 3: Anchored (The Contract)**
+* **Definition:** The **Signature Lock**. The `contract_id` is hashed and written to the Registry.
+* **Goal:** Freeze the API so callers can be safely synthesized.
+* **The Sovereignty Check:** If a node is marked `authority_class = 0`, its Contract is frozen here. Any attempt to change the signature during later stages results in a **CRA Termination (UNSAT)**.
+* **Exit Gate (Gate B):** Identity Quad coherence.
+* **Registry State:** `maturity = 'anchored'`.
+
+## **3.4. State 4: Hydrating (The Surgery)**
+* **Definition:** The Logic is injected. The "Agentic Loop" (governed by the CRA) writes the actual Go code.
+* **The Mutation Workset:** Logic is written to the `mutation_worksets` table, not the physical disk.
+* **SCC Synchronization:** If a node is part of an SCC, the entire cluster must reach the end of "Hydration" simultaneously.
+* **Exit Gates (Gate C & D):** Node-local tests must pass, and the package must compile.
+* **Registry State:** `maturity = 'hydrated'`.
+
+## **3.5. State 5: Sequenced (Equilibrium)**
+* **Definition:** The **L-ID (Logic Hash)** and **D-ID (Dependency Hash)** are calculated and locked.
+* **Goal:** Persistence and Materialization. 
+* **The Atomic Flush:** The Registry Engine moves the data from the `mutation_workset` to the `nodes` table and triggers the **Batch AST Surgeon** to write the code to the physical disk.
+* **Exit Gate (Gate E & F):** Canonical Replay check. The materialized code must generate the exact same Logic Hash as the Workset.
+* **Registry State:** `maturity = 'sequenced'`.
+
+### **The "Not-My-First-Rodeo" Conflict Handling**
+
+| Scenario | Pipeline Response |
+| :--- | :--- |
+| **Signature Drift** | Node is demoted to **Hollow**. Callers are flagged for re-reconciliation. |
+| **Logic Failure** | Node stays in **Hydrating**. CRA attempts a "Topology Change" or "Adapter Synthesis." |
+| **Environment Mismatch** | Pipeline Pauses. **D-ID** is invalidated. Re-Sequencing required. |
 
 
-
+### **The "Market" Differentiator**
+Most AI tools try to go from **State 1 to State 5** in one jump. That’s why they break. Genesis forces a "Pause" at **State 3 (Anchored)**. By locking the contracts before writing the logic, we ensure that the "Physics" of the system is solved before we ever spend a single token on the "Brain."
 
 
 
