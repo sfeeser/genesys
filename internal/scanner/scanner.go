@@ -1,16 +1,19 @@
 // Package scanner performs structural analysis of existing source code.
 // It maps physical Go files back to the Identity Grammar.
-// Deterministic Status: SEQUENCED (GRAMMAR-STABLE)
+// Deterministic Status: SEQUENCED (HARDENED-STABLE)
 package scanner
 
 import (
+	"bytes"
+	"crypto/sha256"
 	"fmt"
 	"go/ast"
 	"go/parser"
+	"go/printer"
 	"go/token"
 	"io"
 
-	"genesis/internal/identity" // Allowed L1 Import
+	"genesis/internal/identity"
 )
 
 // ScanResult represents the collection of identities found in a single file.
@@ -31,8 +34,26 @@ func New() *FileScanner {
 	}
 }
 
-// ScanBody analyzes a raw source stream to extract Identity anchors.
+// CalculateLogicHash generates a deterministic SHA-256 fingerprint of an AST node.
+// It hashes the formatted AST rendering, which effectively normalizes whitespace
+// and excludes comments not anchored within the specific body subtree.
+func CalculateLogicHash(node ast.Node) string {
+	if node == nil {
+		return "" // Return empty for declarations without bodies
+	}
+
+	var buf bytes.Buffer
+	// RawFormat ensures we are hashing the structural intent, not developer styling.
+	conf := printer.Config{Mode: printer.RawFormat, Tabwidth: 8}
+	_ = conf.Fprint(&buf, token.NewFileSet(), node)
+
+	sum := sha256.Sum256(buf.Bytes())
+	return fmt.Sprintf("%x", sum[:])
+}
+
+// ScanBody analyzes a raw source stream to extract Identity anchors and fingerprints.
 func (s *FileScanner) ScanBody(modulePath, packagePath string, r io.Reader) (*ScanResult, error) {
+	// CHAPTER 4.1: Source Ingestion via AST
 	f, err := parser.ParseFile(s.fset, "", r, parser.ParseComments)
 	if err != nil {
 		return nil, fmt.Errorf("scanner: failed to parse source: %w", err)
@@ -46,21 +67,25 @@ func (s *FileScanner) ScanBody(modulePath, packagePath string, r io.Reader) (*Sc
 		switch d := decl.(type) {
 		case *ast.FuncDecl:
 			id, err := s.mapFuncToIdentity(modulePath, packagePath, d)
-			if err == nil {
-				// 1. Round-Trip Enforcement Gate (Chapter 12.3)
-				// Verify the ID survives the canonical L1 parser before emission.
-				raw := id.String()
-				if _, parseErr := identity.ParseNodeID(raw); parseErr != nil {
-					continue // Silently skip IDs that break grammar physics
-				}
-
-				result.Nodes = append(result.Nodes, identity.IdentityQuad{
-					NodeID:         id,
-					ContractID:     "pending:scanned",
-					LogicHash:      "pending:scanned",
-					DependencyHash: "pending:scanned",
-				})
+			if err != nil {
+				continue
 			}
+
+			// CHAPTER 12.3: Round-Trip Enforcement Gate
+			// Verify the ID survives the canonical L1 parser before emission.
+			if _, parseErr := identity.ParseNodeID(id.String()); parseErr != nil {
+				continue 
+			}
+
+			// Generate the Logic Hash from the function body
+			lHash := CalculateLogicHash(d.Body)
+
+			result.Nodes = append(result.Nodes, identity.IdentityQuad{
+				NodeID:         id,
+				ContractID:     "pending:contract",
+				LogicHash:      lHash,
+				DependencyHash: "pending:dependency",
+			})
 		}
 	}
 
@@ -93,13 +118,12 @@ func (s *FileScanner) mapFuncToIdentity(mod, pkg string, f *ast.FuncDecl) (ident
 		}
 		
 		if typeName != "" {
-			// Enforce unique symbol without breaking Dot-Grammar.
-			// Format: ReceiverType__MethodName (e.g., Registry__PersistNode)
+			// Flattening: ReceiverType__MethodName
 			symbolName = fmt.Sprintf("%s__%s", typeName, f.Name.Name)
 		}
 	}
 
-	// Correct Arity Calculation
+	// Calculate Arity based on actual parameters
 	arity := 0
 	if f.Type.Params != nil {
 		for _, field := range f.Type.Params.List {
