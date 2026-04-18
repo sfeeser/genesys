@@ -567,13 +567,18 @@ Genesis treats the **Registry Engine** and the **CLI Log** as its persistent mem
 
 Chapter 11 defines the **Mandatory Preflight Protocol** that must be satisfied before the Genesis Engine is permitted to execute. This chapter establishes a "Sanity Firewall" between **Architectural Design** and **Code Materialization**.
 
-## **11.1. The Law of Preflighted Execution**
-Genesis executes preflighted designs. It does not perform open-ended architectural negotiation at runtime. While the engine performs bounded conflict resolution and **UNSAT** detection within physical constraints, it will not debate the "soul" of the architecture once the loom is spinning.
-
+### **11.1. The Law of Preflighted Execution**
+Genesis executes preflighted designs. It does not perform open-ended architectural negotiation at runtime. 
 > **Law:** Genesis executes. It does not debate. If the map is broken, the engine does not start.
 
-## **11.2. The Design-Time Handshake (The Architect's Prompt)**
-To prevent the **CRA Solver** from thrashing against an impossible map, the user must "Bless" the `specbook.yaml` using a high-reasoning external audit. This is the most efficient way to resolve structural contradictions before incurring compute costs.
+### **11.2. The Design-Time Handshake (Auditor Prompt)**
+Users must "Bless" the `specbook.yaml` using this standardized audit before invoking the engine:
+> "You are the Genesis Auditor. Perform a binary PASS/FAIL audit of this `specbook.yaml` against the Laws of Dependency Physics:
+> 1. **Topology Integrity:** Analyze `allowed_imports`. **FAIL** if any package imports a higher layer or if `internal` imports `mcp`.
+> 2. **Sibling Isolation:** **FAIL** if `surgeon`, `audit`, or `auditlog` import each other.
+> 3. **Grammar Normalization:** **FAIL** if `node_id` grammar uses `receiver_shape`. Required: `kind.visibility.module.package.receiver.symbol.arity`.
+> 4. **SCC Compliance:** **FAIL** if a cycle spans multiple layers. **PASS** only for intra-package recursion."
+
 
 ### **The "Gate 0" Auditor Prompt (Normative)**
 Users are encouraged to run this prompt against their Specbook before invoking the engine.
@@ -623,50 +628,37 @@ We are now defining the **Genesis Genome**. This is the specific package topolog
 
 ***
 
-# **Chapter 12: Package Topology & Dependency Law**
+## **Chapter 12: Package Topology & Dependency Law**
 
-Chapter 12 defines the **Canonical Package Topology** and the non-bypassable dependency rules for the Genesis Engine. This chapter is **normative** and provides the source of truth for the Preflight Gate.
+Chapter 12 is the **Internal Constitution**. It defines the allowed structure of the Genesis Engine and provides the ground truth for the Preflight Gate.
 
-## **12.1. The Genesis Build Set (The Engine Genome)**
-The Genesis Engine operates under a **Closed-World Assumption**. To build the engine, the following packages are materialized in a strict, non-circular sequence.
+### **12.1. Canonical allowed_imports (Closed World)**
+To satisfy the Topology Laws, the engine is restricted to the following explicit import graph:
 
-| Layer | Package Path | Responsibility |
+| Package | Layer | Allowed Imports (Downstream Only) |
 | :--- | :--- | :--- |
-| **L1** | `internal/identity` | The Root. PublicID, LogicHash, and Identity Quads. |
-| **L2** | `internal/registry` | SQLite Engine, WAL-mode persistence, `nodes` & `edges` tables. |
-| **L3** | `internal/spec` | Specbook YAML parser and normalization logic. |
-| **L4** | `internal/scanner` | Sensory layer. Extracts AST phenotype from existing code. |
-| **L5** | `internal/staging` | The Virtual Loom. In-memory VFS for State 4 mutations. |
-| **L6** | `internal/surgeon` | The Scalpel. `go/ast` and `dave/dst` splicing logic. |
-| **L7** | `internal/audit` | The Hexagonal Gates. Behavioral and Physics verification. |
-| **L8** | `internal/auditlog` | Immutable telemetry and event-sequencing for the UI. |
-| **L9** | `internal/metamorphosis` | State Machine. Manages the 5-state node lifecycle. |
-| **10** | `internal/orchestrator` | The CRA Solver. DAG traversal and conflict resolution. |
-| **11** | `internal/telemetry` | WebSocket server and 60Hz UI event coalescing. |
-| **12** | `internal/mcp` | Transport Boundary. Model Context Protocol interface. |
-| **13** | `cmd/saayn` | Entry Point. CLI bootstrap and signal handling. |
+| `internal/identity` | L1 | [] (Root) |
+| `internal/registry` | L2 | `internal/identity` |
+| `internal/spec` | L3 | `internal/identity` |
+| `internal/scanner` | L4 | `internal/identity`, `internal/spec` |
+| `internal/staging` | L5 | `internal/identity`, `internal/registry`, `internal/spec` |
+| **`internal/surgeon`** | L6 | `internal/identity`, `internal/registry`, `internal/scanner`, `internal/staging` |
+| **`internal/audit`** | L7 | `internal/identity`, `internal/registry`, `internal/spec`, `internal/scanner`, `internal/staging` |
+| **`internal/auditlog`** | L8 | `internal/identity`, `internal/registry` |
+| `internal/metamorphosis`| L9 | `internal/identity`, `internal/registry`, `internal/spec`, `internal/staging`, `internal/surgeon`, `internal/audit`, `internal/auditlog` |
+| `internal/orchestrator` | L10 | `internal/identity`, `internal/registry`, `internal/spec`, `internal/metamorphosis` |
+| `internal/telemetry` | L11 | `internal/identity`, `internal/registry`, `internal/auditlog`, `internal/orchestrator` |
+| `internal/mcp` | L12 | `internal/identity`, `internal/orchestrator` |
+| `cmd/saayn` | L13 | `internal/orchestrator`, `internal/mcp` |
 
-## **12.2. The Deterministic Build Order (The DAG Sequence)**
-To materialize Genesis, the Engine must sequence nodes in the following order. Reversing this order or attempting parallel synthesis across layer boundaries results in a **Deadlock**.
+### **12.2. Deterministic Build Order**
+The DAG Sequence for self-materialization is:
+1. `identity` 2. `registry` 3. `spec` 4. `scanner` 5. `staging` 6. `surgeon` & `audit` (Siblings) 7. `auditlog` 8. `metamorphosis` 9. `orchestrator` 10. `telemetry` 11. `mcp` 12. `cmd/saayn` (Apex).
 
-**Build Order:** 1. **`identity`** (Leaf)
-2. **`registry`**
-3. **`spec`**
-4. **`scanner`**
-5. **`staging`**
-6. **`surgeon`** & **`audit`** (Siblings)
-7. **`auditlog`**
-8. **`metamorphosis`**
-9. **`orchestrator`**
-10. **`telemetry`**
-11. **`mcp`**
-12. **`cmd/saayn`** (Apex)
-
-## **12.3. Dependency Rules (Non-Bypassable)**
-
-* **12.3.1. The Gravity Law:** A package may only depend on packages in **lower layers**. Upward dependencies (e.g., `identity` importing `orchestrator`) trigger an immediate **Preflight FAIL**.
-* **12.3.2. Sibling Isolation:** `surgeon`, `audit`, and `auditlog` occupy the same layer (L6-L8) but **must not import each other**. They are coordinated exclusively by `metamorphosis`.
-* **12.3.3. The Zero-Logic Entry:** `cmd/saayn` is a shell. It may only import `mcp` and `orchestrator`. It is forbidden from containing business logic or direct AST manipulation.
+### **12.3. Corrected Grammar Standard**
+* **Field:** `receiver`
+* **Values:** `none | value | pointer`
+* **Rule:** All references to `receiver_shape` in the Registry Schema (Chapter 2) and Metadata are hereby deprecated and replaced with `receiver`.
 
 ## **12.4. Forbidden Patterns (Architectural Crimes)**
 * **The Circular Feedback:** `metamorphosis` → `orchestrator`. (The state machine must be a servant to the orchestrator).
