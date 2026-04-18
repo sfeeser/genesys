@@ -30,7 +30,7 @@ The Registry Engine replaces flat-file manifests with a relational model to mana
 
 ## **1.4. The Identity Quad: Environment-Stable Determinism**
 Every node is anchored by four immutable dimensions:
-* **NodeID:** `kind.visibility.module.package.receiver_shape.symbol.arity`.
+* **NodeID:** `kind.visibility.module.package.receiver.symbol.arity`.
 * **C-ID (Contract):** Canonical signature and generic constraints.
 * **L-ID (Logic):** SHA-256 of the normalized, order-independent AST.
 * **D-ID (Dependency/Environment):** A recursive digest of the transitive dependency graph, `go.sum` hash, toolchain version, and explicit build context (**GOOS, GOARCH, tags, and flags**).
@@ -98,7 +98,7 @@ CREATE TABLE nodes (
     visibility TEXT NOT NULL,
     module_path TEXT NOT NULL,
     package_path TEXT NOT NULL,
-    receiver_shape TEXT NOT NULL, -- 'none', 'pointer', or 'value'
+    receiver TEXT NOT NULL CHECK (receiver IN ('none', 'pointer', 'value')),
     symbol_name TEXT NOT NULL,
     arity INTEGER NOT NULL,
 
