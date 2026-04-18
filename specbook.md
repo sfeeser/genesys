@@ -274,6 +274,41 @@ The Canvas is designed for "At-a-Glance" troubleshooting:
 * **Pulse:** The "Heartbeat" of the solver. If the pulse stops but the node is not Green, the process has **STALLED**.
 
 
+# **Chapter 5: The Surgical Inner Loop**
+
+The Surgical Inner Loop is the execution phase of the **APPLY** stage. It is responsible for taking the "Approved Logic" from the **Mutation Workset** (State 4) and physically weaving it into the source files (State 5).
+
+### **The "Why" for the Reliability Engineer**
+Legacy AI tools often treat codebases like text files, leading to missing brackets or "hallucinated" imports. By operating exclusively at the **Syntax Tree** level, Genesis makes it physically impossible to produce a file that is not syntactically valid. The "Surgery" isn't a text-replace; it's a **Biological Graft**.
+
+## **5.1. The Toolchain: AST vs. DST**
+Genesis utilizes a dual-syntax-tree approach to ensure that generated code is indistinguishable from high-quality human code.
+
+* **`go/ast` (The X-Ray):** Used during the **GRAPH** and **PLAN** stages to perform high-speed type checking and dependency tracing. It is the "Scientific" view of the code.
+* **`dave/dst` (The Scalpel):** Used during the **APPLY** stage. Unlike the standard library AST, the **Decorated Syntax Tree (DST)** preserves "decorations" (comments, line breaks, and grouping). This ensures that when Genesis edits a function, it doesn't "sanitize" away the human-written documentation around it.
+
+
+## **5.2. The Splicing Protocol**
+The Surgeon follows a strict "Targeted Replacement" strategy rather than a full-file rewrite.
+
+1.  **Node Localization:** The Surgeon uses the **NodeID** components from the Registry to locate the exact byte-offset of the target symbol (function, struct, or interface) in the physical file.
+2.  **Constraint Verification:** Before cutting, the Surgeon re-verifies the `logic_hash` of the existing code on disk. If the disk has changed since the **PLAN** stage (Unauthorized Drift), the surgery is aborted to prevent a collision.
+3.  **The DST Merge:** The new logic is parsed into a DST fragment and "stitched" into the target file's tree. 
+    * **Import Management:** The Surgeon automatically reconciles imports. It adds missing packages and removes unused ones, respecting existing aliases.
+4.  **Formatting Alignment:** The Surgeon applies a `gofmt`-compliant pass to the modified DST, ensuring that the new code matches the project's visual style.
+
+## **5.3. The Atomic Materialization (VFS to Disk)**
+To prevent "Torn State" (where a file is partially written before a crash), the Surgeon uses an **Atomic Swap** pattern:
+
+* **Step 1:** The modified DST is rendered to a temporary buffer in the **VFS**.
+* **Step 2:** The **Hexagonal Envelope** runs **Gate D** (Compilation) on the buffer.
+* **Step 3:** If valid, the buffer is written to a `.tmp` file on the physical disk.
+* **Step 4:** A filesystem `rename()` call replaces the original file with the `.tmp` file. This is a nearly instantaneous, atomic operation at the OS level.
+
+## **5.4. Collision-Safe Scoping**
+When the CRA generates code for State 4 (Hydrating), the Surgeon provides a "Safe Scope" map:
+* **Shadowing Protection:** If the agent tries to name a local variable `err` but a variable named `err` is already dominant in that scope, the Surgeon forces a rename (e.g., `err2`) during the DST stitch to preserve logical intent without shadowing.
+* **Receiver Stability:** If a method is being added to a struct, the Surgeon ensures it uses the same receiver name (e.g., `(f *Fighter)`) as the existing method set.
 
 
 
