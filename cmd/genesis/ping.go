@@ -74,10 +74,12 @@ var pingCmd = &cobra.Command{
 }
 
 // verifyTier hydrates a client using the Precedence Law (Flags > Env > Defaults).
+// Path: genesis/cmd/genesis/ping.go
+// ... imports
+
 func verifyTier(ctx context.Context, tier cognition.Tier, mu *sync.Mutex, clock *time.Time) error {
 	var model, key string
 
-	// 1. Determinant Ingestion
 	switch tier {
 	case cognition.TierFast:
 		model = os.Getenv("GENESIS_FAST_MODEL")
@@ -88,29 +90,29 @@ func verifyTier(ctx context.Context, tier cognition.Tier, mu *sync.Mutex, clock 
 	case cognition.TierEmbed:
 		model = os.Getenv("GENESIS_EMBED_MODEL")
 		key = os.Getenv("GENESIS_EMBED_API_KEY")
+	default:
+		return fmt.Errorf("unsupported tier: %s", tier)
 	}
 
-	// 2. Fallback Resolution
 	if key == "" {
 		key = os.Getenv("GENESIS_API_KEY")
 	}
 
-	// 3. Loud Delay Ingestion (Requirement: Fail on malformed input)
 	delaySec := 0
 	if raw := os.Getenv("GENESIS_API_DELAY"); raw != "" {
 		v, err := strconv.Atoi(raw)
 		if err != nil {
-			return fmt.Errorf("invalid GENESIS_API_DELAY for tier %s: %w", tier, err)
+			// Wrap with ErrDeterminantMissing for Exit Code 2
+			return fmt.Errorf("%w: GENESIS_API_DELAY invalid: %v", ErrDeterminantMissing, err)
 		}
 		delaySec = v
 	}
 
-	// 4. Specific Error Reporting (Requirement: Tier-aware error messages)
 	if model == "" {
-		return fmt.Errorf("missing model determinant for tier %s", tier)
+		return fmt.Errorf("%w: model name for tier %s", ErrDeterminantMissing, tier)
 	}
 	if key == "" {
-		return fmt.Errorf("missing API key determinant for tier %s", tier)
+		return fmt.Errorf("%w: API key for tier %s", ErrDeterminantMissing, tier)
 	}
 
 	cfg := cognition.Config{
