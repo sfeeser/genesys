@@ -9,7 +9,9 @@ Chapter 6: The Hexagonal Gates
 Chapter 7: The Canvas  
 Chapter 8: The Mechanical Delivery  
 Chapter 9: The Agentic Loop  
-Chapter 10: The Greenfield Protocol  
+Chapter 10: The Greenfield Protocol
+Chapter 11: The Architectural Preflight  
+Chapter 12: Package Topology & Dependency Law  
 
 # **Chapter 1: The Genesis Manifesto (v7.0 - RELEASE)**
 
