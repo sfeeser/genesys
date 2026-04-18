@@ -28,13 +28,18 @@ func Open(dsn string) (*Registry, error) {
 	}
 
 	q := u.Query()
-	q.Set("_journal", "WAL")
+	q.Set("_journal", "WAL")         // Enable Write-Ahead Logging
+	q.Set("_busy_timeout", "5000")   // 5s wait for locks before failure
 	u.RawQuery = q.Encode()
 
 	db, err := sql.Open("sqlite3", u.String())
 	if err != nil {
 		return nil, fmt.Errorf("registry: failed to connect to genome.db: %w", err)
 	}
+
+	// SQLite Performance Constraint: Single-writer bottleneck requires pool limits.
+	db.SetMaxOpenConns(1)
+	db.SetMaxIdleConns(1)
 
 	return &Registry{db: db}, nil
 }
@@ -44,8 +49,8 @@ func Open(dsn string) (*Registry, error) {
 func (r *Registry) PersistNode(quad identity.IdentityQuad, maturity string, class int, auditUnix int64) error {
 	query := `
 	INSERT INTO nodes (
-		node_id, kind, visibility, module_path, package_path, 
-		receiver, symbol_name, arity, contract_id, logic_hash, 
+		node_id, kind, visibility, module_path, package_path,
+		receiver, symbol_name, arity, contract_id, logic_hash,
 		dependency_hash, maturity, authority_class, last_audit_timestamp
 	) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 	ON CONFLICT(node_id) DO UPDATE SET
@@ -56,7 +61,8 @@ func (r *Registry) PersistNode(quad identity.IdentityQuad, maturity string, clas
 		last_audit_timestamp=excluded.last_audit_timestamp;`
 
 	id := quad.NodeID
-	_, err := r.db.Exec(query,
+	_, err := r.db.Exec(
+		query,
 		id.String(),
 		string(id.Kind),
 		string(id.Visibility),
@@ -70,9 +76,8 @@ func (r *Registry) PersistNode(quad identity.IdentityQuad, maturity string, clas
 		quad.DependencyHash,
 		maturity,
 		class,
-		auditUnix, // Persisted as a stable integer determinant
+		auditUnix,
 	)
-
 	if err != nil {
 		return fmt.Errorf("registry: failed to persist node %s: %w", id.String(), err)
 	}
@@ -125,28 +130,33 @@ func (r *Registry) GetNodeWithAuthority(nodeID string) (identity.IdentityQuad, s
 	var k, v, rec, mod, pkg, sym string
 	var arity int
 
-	query := `SELECT kind, visibility, module_path, package_path, receiver, 
-	                 symbol_name, arity, contract_id, logic_hash, 
-	                 dependency_hash, maturity, authority_class FROM nodes WHERE node_id = ?`
+	query := `SELECT kind, visibility, module_path, package_path, receiver,
+	                 symbol_name, arity, contract_id, logic_hash,
+	                 dependency_hash, maturity, authority_class
+	          FROM nodes WHERE node_id = ?`
 
 	err := r.db.QueryRow(query, nodeID).Scan(
 		&k, &v, &mod, &pkg, &rec, &sym, &arity,
 		&q.ContractID, &q.LogicHash, &q.DependencyHash, &maturity, &authClass,
 	)
 	if err != nil {
-		return q, "", 0, fmt.Errorf("registry: node %s not found: %w", nodeID, err)
+		if errors.Is(err, sql.ErrNoRows) {
+			return q, "", 0, fmt.Errorf("%w: %s", ErrNodeNotFound, nodeID)
+		}
+		return q, "", 0, fmt.Errorf("registry: retrieval failure: %w", err)
 	}
 
-	// Reconstruct via L1 Parser for grammar enforcement
+	// Reconstruct the 7-part identity grammar
 	rawID := fmt.Sprintf("%s.%s.%s.%s.%s.%s.%d", k, v, mod, pkg, rec, sym, arity)
 	parsedID, err := identity.ParseNodeID(rawID)
 	if err != nil {
-		return q, "", 0, err
+		return q, "", 0, fmt.Errorf("registry: stored identity corruption for %s: %w", nodeID, err)
 	}
-	q.NodeID = parsedID
 
+	q.NodeID = parsedID
 	return q, maturity, authClass, nil
 }
+
 
 // [L2 PATCH] Add to internal/registry/registry.go
 // ListAllNodeIDs retrieves the full set of established node identities.
@@ -161,10 +171,15 @@ func (r *Registry) ListAllNodeIDs() ([]string, error) {
 	for rows.Next() {
 		var id string
 		if err := rows.Scan(&id); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("registry: scan failure: %w", err)
 		}
 		ids = append(ids, id)
 	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("registry: row iteration failure: %w", err)
+	}
+
 	return ids, nil
 }
 
