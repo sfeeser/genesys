@@ -452,10 +452,6 @@ The link between the **Registry Engine** and the **Canvas** is a bi-directional 
 * **Localhost Binding:** The server binds strictly to `127.0.0.1`. It is inaccessible from the external network, preserving the "Sovereignty" of the project.
 
 
-
-
-
-
 # **Chapter 9: The Agentic Loop (The CRA Solver)**
 
 The **Convergence Controller (CRA)** is the reasoning engine of Genesis. It manages the iterations within the **Metamorphosis Pipeline**, specifically during the **PLAN** and **HYDRATING** stages. Its goal is to reach an equilibrium where the code satisfies both the **Specbook's Intent** and the **Registry's Physics**.
@@ -565,6 +561,51 @@ The UI distinguishes between the developer's "Human Errors" and the engine's "Sy
 
 ## **10.5. Short-Term Memory Preservation**
 Genesis treats the **Registry Engine** and the **CLI Log** as its persistent memory. Because every node is anchored by a **Logic Hash**, the agent never "forgets" where it is. If the process is killed, pointing SAAYN back at the `.genesis/genome.db` allows it to resume exactly one hash after the last successful sequence.
+
+
+# **Chapter 11: The Architectural Preflight (Gate 0)**
+
+Chapter 11 defines the **Mandatory Preflight Protocol** that must be satisfied before the Genesis Engine is permitted to execute. This chapter establishes a "Sanity Firewall" between **Architectural Design** and **Code Materialization**.
+
+## **11.1. The Law of Preflighted Execution**
+Genesis executes preflighted designs. It does not perform open-ended architectural negotiation at runtime. While the engine performs bounded conflict resolution and **UNSAT** detection within physical constraints, it will not debate the "soul" of the architecture once the loom is spinning.
+
+> **Law:** Genesis executes. It does not debate. If the map is broken, the engine does not start.
+
+## **11.2. The Design-Time Handshake (The Architect's Prompt)**
+To prevent the **CRA Solver** from thrashing against an impossible map, the user must "Bless" the `specbook.yaml` using a high-reasoning external audit. This is the most efficient way to resolve structural contradictions before incurring compute costs.
+
+### **The "Gate 0" Auditor Prompt (Normative)**
+Users are encouraged to run this prompt against their Specbook before invoking the engine.
+> "You are the Genesis Architectural Auditor. Perform a binary PASS/FAIL audit of this `specbook.yaml` against the Laws of Dependency Physics:
+> 1. **Topology Integrity:** Identify forbidden dependency cycles and illegal upward dependencies (e.g., a utility importing an orchestrator). 
+>    * *Note: Intentional SCC-eligible cycles are permitted only if they do not violate layer boundaries or authority classes.*
+> 2. **Identity Grammar:** Verify `node_id` follows: `kind.visibility.module.package.receiver.symbol.arity`.
+> 3. **Stability Flow:** High-stability nodes (`authority_class: 0`) must never depend on lower-stability nodes (`authority_class: 2`).
+> 4. **Boundary Law:** Verify no internal logic package imports the `mcp` (Model Context Protocol) layer.
+> 
+> Return **# PREFLIGHT STATUS: PASS** or a list of **Structural Violations**."
+
+## **11.3. The Genesis Runtime Gate (Gate 0)**
+When `./saayn genesis` is executed, the engine performs its own internal, automated version of the Preflight. This is a **Hard Guardrail** to protect the integrity of the SQLite Registry.
+
+1.  **Ingestion:** The engine parses the `specbook.yaml` into an in-memory graph.
+2.  **Validation:** It runs a **Cycle Detection Algorithm**.
+    * **FAIL:** If a cycle crosses a **Layer Boundary** (e.g., utility → main → utility).
+    * **PASS (SCC-Mapped):** If a cycle is contained within a single **SCC-eligible package** or defined mutation unit.
+3.  **The Hard Stop:** If any check fails, Genesis exits immediately with a **Specbook Panic**. It will not create files, modify the Registry, or burn tokens.
+
+## **9.4. Failure Handling: The Specbook Panic**
+If Preflight fails, the system provides a **Minimal Conflict Set (MCS)**. 
+* **Visual Feedback:** The **Canvas** highlights offending edges in **Static Orange**.
+* **Recovery:** Genesis is blocked. The Architect must correct the `specbook.yaml` and re-run the Preflight. There is no override flag.
+
+## **11.5. Rationale: Separation of Concerns**
+| Domain | Responsibility | Focus |
+| :--- | :--- | :--- |
+| **Preflight (Design)** | Validation, Critique, Normalization. | Thinking/Debate. |
+| **Genesis (Execution)** | Deterministic Materialization. | Doing/Building. |
+
 
 
 
