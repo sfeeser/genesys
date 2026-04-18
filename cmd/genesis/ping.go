@@ -1,4 +1,6 @@
+// Package main handles the Cobra CLI surface for the Genesis Engine.
 // Path: genesis/cmd/genesis/ping.go
+// Deterministic Status: SEQUENCED (CERTIFIED)
 package main
 
 import (
@@ -13,6 +15,9 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// Shared Tier State (Chapter 13.3)
+// Mutexes and clocks are persisted at the package level to survive command execution
+// if called repeatedly within the same process.
 var (
 	fastMu     sync.Mutex
 	fastClock  time.Time
@@ -29,24 +34,34 @@ func init() {
 var pingCmd = &cobra.Command{
 	Use:   "ping",
 	Short: "Verifies connectivity for the Cognitive Triad (FAST, DEEP, EMBED)",
+	Long:  `Executes a transactional PONG handshake with all configured AI hemispheres.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
+		// CHAPTER 14.3: Derive context from shell-managed root context
 		ctx, cancel := context.WithTimeout(cmd.Context(), 45*time.Second)
 		defer cancel()
 
 		fmt.Printf("Genesis Handshake | Audit ID: %d\n", auditUnix)
 		fmt.Println("--------------------------------------------------")
 
-		tiers := []cognition.Tier{cognition.TierFast, cognition.TierDeep, cognition.TierEmbed}
-		clocks := []*time.Time{&fastClock, &deepClock, &embedClock}
-		mutexes := []*sync.Mutex{&fastMu, &deepMu, &embedMu}
+		type tierCheck struct {
+			tier  cognition.Tier
+			mu    *sync.Mutex
+			clock *time.Time
+		}
+
+		checks := []tierCheck{
+			{cognition.TierFast, &fastMu, &fastClock},
+			{cognition.TierDeep, &deepMu, &deepClock},
+			{cognition.TierEmbed, &embedMu, &embedClock},
+		}
 
 		var failed bool
-		for i, tier := range tiers {
-			if err := verifyTier(ctx, tier, mutexes[i], clocks[i]); err != nil {
+		for _, check := range checks {
+			if err := verifyTier(ctx, check.tier, check.mu, check.clock); err != nil {
 				failed = true
-				fmt.Printf("TIER: %-5s | STATUS: ❌ FAIL | %v\n", tier, err)
+				fmt.Printf("TIER: %-5s | STATUS: ❌ FAIL | %v\n", check.tier, err)
 			} else {
-				fmt.Printf("TIER: %-5s | STATUS: ✅ PONG\n", tier)
+				fmt.Printf("TIER: %-5s | STATUS: ✅ PONG\n", check.tier)
 			}
 		}
 
@@ -58,10 +73,11 @@ var pingCmd = &cobra.Command{
 	},
 }
 
+// verifyTier hydrates a client using the Precedence Law (Flags > Env > Defaults).
 func verifyTier(ctx context.Context, tier cognition.Tier, mu *sync.Mutex, clock *time.Time) error {
 	var model, key string
 
-	// Determinant Ingestion
+	// 1. Determinant Ingestion
 	switch tier {
 	case cognition.TierFast:
 		model = os.Getenv("GENESIS_FAST_MODEL")
@@ -72,16 +88,14 @@ func verifyTier(ctx context.Context, tier cognition.Tier, mu *sync.Mutex, clock 
 	case cognition.TierEmbed:
 		model = os.Getenv("GENESIS_EMBED_MODEL")
 		key = os.Getenv("GENESIS_EMBED_API_KEY")
-	default:
-		return fmt.Errorf("unsupported tier: %s", tier)
 	}
 
-	// Fallback Resolution
+	// 2. Fallback Resolution
 	if key == "" {
 		key = os.Getenv("GENESIS_API_KEY")
 	}
 
-	// Loud Delay Ingestion (Requirement B)
+	// 3. Loud Delay Ingestion (Requirement: Fail on malformed input)
 	delaySec := 0
 	if raw := os.Getenv("GENESIS_API_DELAY"); raw != "" {
 		v, err := strconv.Atoi(raw)
@@ -91,7 +105,7 @@ func verifyTier(ctx context.Context, tier cognition.Tier, mu *sync.Mutex, clock 
 		delaySec = v
 	}
 
-	// Specific Error Reporting (Requirement C)
+	// 4. Specific Error Reporting (Requirement: Tier-aware error messages)
 	if model == "" {
 		return fmt.Errorf("missing model determinant for tier %s", tier)
 	}
