@@ -673,3 +673,55 @@ By defining Genesis using this topology, we allow the engine to treat itself as 
 * **The Test:** If we update the `identity` package, the Orchestrator will see the drift, trigger a **Sovereignty Shockwave**, and force a re-reconciliation of every layer above it. 
 * **The Proof:** If the engine can successfully "Surround-Hydrate" its own `metamorphosis` package without breaking the DAG, the **Greenfield Protocol** is verified.
 
+### **Chapter 13: The Cognitive Tier Split**
+
+The Genesis Engine identifies "Intelligence" as a non-deterministic, side-effectual dependency. To protect the **Deterministic Core**, external cognition is partitioned into strict **Hemispheres** governed by the laws of this chapter.
+
+---
+
+#### **13.1 Tier Separation & Isolation**
+The engine enforces a physical bifurcation of external reasoning to prevent **Reasoning Waste** and ensure that sensory operations (reading) never interfere with surgical operations (writing).
+
+* **Tier 1: FAST (Sensory):** Utilized exclusively for read-oriented workflows such as analysis, enrichment, and semantic indexing.
+* **Tier 2: DEEP (Reasoning):** Utilized exclusively for write-oriented workflows such as logic proposal and architectural repair.
+
+**Boundary Law:** The Cognition layer **MUST NOT** import `registry`, import `surgeon`, or mutate `IdentityQuad`. All outputs are untrusted and **MUST** be validated by the Scanner (L4) and Auditor (L7) before any state transition.
+
+---
+
+#### **13.2 Determinant Hierarchy & Fallback Law**
+To ensure high availability, the engine implements a **Hierarchical Credential Lookup**. Tier-local determinants take precedence over global fallbacks.
+
+| Variable | Type | Role | Fallback To |
+| :--- | :--- | :--- | :--- |
+| `GENESIS_FAST_MODEL` | String | Model for Sensory Tier | N/A |
+| `GENESIS_DEEP_MODEL` | String | Model for Reasoning Tier | N/A |
+| `GENESIS_FAST_API_KEY`| Secret | Local FAST credential | `GENESIS_API_KEY` |
+| `GENESIS_DEEP_API_KEY`| Secret | Local DEEP credential | `GENESIS_API_KEY` |
+| `GENESIS_API_DELAY` | Integer| Cooldown in Seconds | 0 (No Delay) |
+
+#### **13.3 Temporal Guardrail (Sequential Spacing)**
+Each tier enforces a shared sequential spacing invariant. **FAST** and **DEEP** tiers are independent; no temporal coordination exists across tiers.
+
+**The Reservation Invariant:**
+For each request, the implementation **MUST** compute:
+$$reservedSlot := lastCall + delay$$
+$$if\ now > reservedSlot:\ reservedSlot = now$$
+
+The request **MUST** wait until `reservedSlot`.
+* **Upon Reservation:** `lastCall` **MUST** be set to `reservedSlot`.
+* **On Cancellation:** Rollback is permitted **ONLY IF** `lastCall == reservedSlot`. If `lastCall` has advanced beyond `reservedSlot`, rollback **MUST NOT** occur.
+
+#### **13.4 Connectivity Invariant (PONG)**
+The system **MUST** verify each tier before initiating a **Convergence Cycle**.
+
+1.  **Handshake:** Send micro-prompt: `"System check. Respond only with PONG."`
+2.  **Compliance:** The response **MUST** equal `"PONG"` after `TrimSpace`.
+3.  **Failure:** Any transport failure, empty response, or contract violation **MUST** cause `Converge()` to return an error. No state transition may proceed.
+
+#### **13.5 Reference Authority**
+The implementation of this chapter **MUST** align with the authoritative SDK surface as defined by the **Go Gen AI SDK Reference**:
+[https://pkg.go.dev/google.golang.org/genai](https://pkg.go.dev/google.golang.org/genai)
+
+This reference serves as the normative authority for all `ClientConfig` and `GenerateContent` signatures.
+
