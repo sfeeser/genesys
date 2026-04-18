@@ -656,9 +656,10 @@ The DAG Sequence for self-materialization is:
 1. `identity` 2. `registry` 3. `spec` 4. `scanner` 5. `staging` 6. `surgeon` & `audit` (Siblings) 7. `auditlog` 8. `metamorphosis` 9. `orchestrator` 10. `telemetry` 11. `mcp` 12. `cmd/saayn` (Apex).
 
 ### **12.3. Corrected Grammar Standard**
-* **Field:** `receiver`
-* **Values:** `none | value | pointer`
-* **Rule:** All references to `receiver_shape` in the Registry Schema (Chapter 2) and Metadata are hereby deprecated and replaced with `receiver`.
+- Field: receiver
+- Values: none | value | pointer
+- Rule: NodeID grammar is kind.visibility.module.package.receiver.symbol.arity.
+- All normative references in this spec use receiver exclusively.
 
 ## **12.4. Forbidden Patterns (Architectural Crimes)**
 * **The Circular Feedback:** `metamorphosis` → `orchestrator`. (The state machine must be a servant to the orchestrator).
