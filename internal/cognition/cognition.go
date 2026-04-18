@@ -20,6 +20,7 @@ type Tier string
 const (
 	TierFast Tier = "FAST"
 	TierDeep Tier = "DEEP"
+	TierEmbed Tier = "EMBED"
 )
 
 // Config represents the raw determinants from the environment.
