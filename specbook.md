@@ -42,3 +42,171 @@ The Canvas renders a **Convergence Graph** derived from the Registry Engine’s 
 * **SCC Compression:** Tightly coupled cyclic regions are visually collapsed into "Blobs" to represent atomic mutation units.
 * **Kinetic Telemetry:** Observational signals—**Pulse** (iteration pressure) and **Vibration** (instability)—allow the developer to monitor the "Virtual Loom" without interrupting the solver.
 
+
+# **Chapter 2: The DNA Registry (Final Hardening)**
+
+## **2.1. Registry Physical Architecture**
+The Registry is a single SQLite 3 database (`.genesis/genome.db`). 
+
+### **The Canonical Audit Export (Law)**
+Any operation that commits a change to the SQLite DB must trigger a deterministic, sorted YAML export to `genome.yaml`. This ensures that **Git** remains the auditor of the binary engine's state.
+
+## **2.2. The Hardened Schema**
+
+### **A. Metadata (The Environment Singleton)**
+We have tightened the singleton to include full build provenance and session verification.
+
+```sql
+CREATE TABLE metadata (
+    singleton INTEGER PRIMARY KEY CHECK (singleton = 1),
+    go_version TEXT NOT NULL,
+    goos TEXT NOT NULL,
+    goarch TEXT NOT NULL,
+    build_tags_json TEXT NOT NULL,
+    build_flags_json TEXT NOT NULL,
+    cgo_enabled INTEGER NOT NULL CHECK (cgo_enabled IN (0,1)),
+    go_sum_hash TEXT NOT NULL,
+    module_graph_hash TEXT NOT NULL,
+    workspace_mode TEXT NOT NULL,
+    last_sequence_hash TEXT NOT NULL,
+    schema_version TEXT NOT NULL DEFAULT 'v7'
+);
+```
+
+### **B. Nodes (State-Aware Integrity)**
+We have componentized the NodeID and added state-based nullability rules to be enforced by Chapter 3 logic.
+
+```sql
+CREATE TABLE nodes (
+    node_id TEXT PRIMARY KEY,
+    
+    -- COMPONENTIZED IDENTITY
+    kind TEXT NOT NULL,
+    visibility TEXT NOT NULL,
+    module_path TEXT NOT NULL,
+    package_path TEXT NOT NULL,
+    receiver_shape TEXT NOT NULL, -- 'none', 'pointer', or 'value'
+    symbol_name TEXT NOT NULL,
+    arity INTEGER NOT NULL,
+
+    -- THE IDENTITY QUAD
+    contract_id TEXT,         -- Required for maturity >= 'anchored'
+    canonical_contract TEXT,  -- Required for maturity >= 'anchored'
+    logic_hash TEXT,          -- Required for maturity == 'sequenced'
+    dependency_hash TEXT,     -- Required for maturity == 'sequenced'
+
+    maturity TEXT NOT NULL CHECK (maturity IN ('draft', 'hollow', 'anchored', 'hydrated', 'sequenced')),
+    authority_class INTEGER NOT NULL CHECK (authority_class IN (0,1,2)),
+    gene TEXT,
+    business_purpose TEXT,
+    last_audit_timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+### **C. The Graph & SCC Model (Revision-Synced)**
+We have unified `graph_revision` and `graph_hash` to eliminate redundancy and ensured SCC membership is explicitly revision-scoped.
+
+```sql
+CREATE TABLE graph_revisions (
+    graph_hash TEXT PRIMARY KEY, -- SHA-256 of the total edge set
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE edges (
+    source_node_id TEXT NOT NULL,
+    target_node_id TEXT,           -- Internal
+    target_external_symbol TEXT,   -- External
+    edge_kind TEXT NOT NULL,
+    graph_hash TEXT NOT NULL,
+    PRIMARY KEY (source_node_id, target_node_id, target_external_symbol, edge_kind, graph_hash),
+    FOREIGN KEY (source_node_id) REFERENCES nodes(node_id),
+    FOREIGN KEY (graph_hash) REFERENCES graph_revisions(graph_hash)
+);
+
+CREATE TABLE scc_cluster_defs (
+    cluster_id TEXT NOT NULL,
+    graph_hash TEXT NOT NULL,
+    authority_partitioned INTEGER NOT NULL,
+    node_count INTEGER NOT NULL,
+    PRIMARY KEY (cluster_id, graph_hash),
+    FOREIGN KEY (graph_hash) REFERENCES graph_revisions(graph_hash)
+);
+
+CREATE TABLE scc_cluster_members (
+    cluster_id TEXT NOT NULL,
+    graph_hash TEXT NOT NULL,
+    node_id TEXT NOT NULL,
+    PRIMARY KEY (cluster_id, graph_hash, node_id),
+    FOREIGN KEY (cluster_id, graph_hash) REFERENCES scc_cluster_defs(cluster_id, graph_hash),
+    FOREIGN KEY (node_id) REFERENCES nodes(node_id)
+);
+```
+
+### **D. Semantic Provenance (The Record Bridge)**
+Vectors are no longer "floating." They are bound to a specific node AND a specific inference profile.
+
+```sql
+CREATE TABLE inference_profiles (
+    profile_id TEXT PRIMARY KEY,
+    model_name TEXT NOT NULL,
+    model_revision TEXT NOT NULL,
+    dimensions INTEGER NOT NULL,
+    distance_metric TEXT NOT NULL,
+    summary_schema_version TEXT NOT NULL,
+    summary_prompt_hash TEXT NOT NULL,
+    chunking_policy TEXT NOT NULL,
+    normalization_policy TEXT NOT NULL
+);
+
+CREATE TABLE semantic_records (
+    record_id INTEGER PRIMARY KEY,
+    node_id TEXT NOT NULL,
+    profile_id TEXT NOT NULL,
+    summary_hash TEXT NOT NULL,
+    is_stale INTEGER NOT NULL CHECK (is_stale IN (0,1)),
+    FOREIGN KEY (node_id) REFERENCES nodes(node_id),
+    FOREIGN KEY (profile_id) REFERENCES inference_profiles(profile_id)
+);
+
+CREATE VIRTUAL TABLE semantic_index USING vss0(
+    record_id INTEGER,
+    vector(3072)
+);
+```
+
+## **2.3. Transactional Enforcement (The Solver Workspace)**
+To guarantee SCC atomicity and environment safety:
+
+1.  **Environment Sentinel:** Before any mutation transaction, the engine verifies the current `runtime_context` against the `metadata` singleton. If the OS, Architecture, or Tags differ, the transaction is forbidden.
+2.  **The Mutation Workset:** The CRA does not update `nodes` directly. It writes to a `mutation_worksets` table.
+    * **The Finalization Gate:** A trigger on the workset verifies that if any node in an SCC is being mutated, **all** members of that SCC (for the current `graph_hash`) must be present in the workset with a valid state transition.
+    * **Atomic Flush:** Only upon 100% SCC completeness and **Hexagonal Gate** approval is the workset flushed to the `nodes` table.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
