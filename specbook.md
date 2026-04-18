@@ -595,7 +595,7 @@ When `./saayn genesis` is executed, the engine performs its own internal, automa
     * **PASS (SCC-Mapped):** If a cycle is contained within a single **SCC-eligible package** or defined mutation unit.
 3.  **The Hard Stop:** If any check fails, Genesis exits immediately with a **Specbook Panic**. It will not create files, modify the Registry, or burn tokens.
 
-## **9.4. Failure Handling: The Specbook Panic**
+## **11.4. Failure Handling: The Specbook Panic**
 If Preflight fails, the system provides a **Minimal Conflict Set (MCS)**. 
 * **Visual Feedback:** The **Canvas** highlights offending edges in **Static Orange**.
 * **Recovery:** Genesis is blocked. The Architect must correct the `specbook.yaml` and re-run the Preflight. There is no override flag.
@@ -607,7 +607,74 @@ If Preflight fails, the system provides a **Minimal Conflict Set (MCS)**.
 | **Genesis (Execution)** | Deterministic Materialization. | Doing/Building. |
 
 
+The "Internal Constitution" has been promoted. By moving this to **Chapter 12**, we establish it as the final destination of the Manifesto—the **Self-Referential Blueprint**. 
 
+We are now defining the **Genesis Genome**. This is the specific package topology required to build the Genesis Engine itself. If the engine can materialize its own source code using these laws, the Greenfield Protocol is proven.
 
+***
 
+### **Critic’s Brief: Technical Architecture Review**
+**Role:** Lead Systems Architect / Dependency Engineer.
+**Objective:** Validate the "Bootstrap Topology" for Genesis.
+**Focus Areas:**
+1.  **DAG Sequence:** Does the Build Order (Topological Sort) ensure that leaf nodes are materialized before orchestrators?
+2.  **Package Completeness:** Does the updated set cover all mechanical requirements (SQLite, VFS, AST, WebSockets)?
+3.  **Self-Hosting Integrity:** Is the hierarchy robust enough for Genesis to "Sequencing" itself?
+
+***
+
+# **Chapter 12: Package Topology & Dependency Law**
+
+Chapter 12 defines the **Canonical Package Topology** and the non-bypassable dependency rules for the Genesis Engine. This chapter is **normative** and provides the source of truth for the Preflight Gate.
+
+## **12.1. The Genesis Build Set (The Engine Genome)**
+The Genesis Engine operates under a **Closed-World Assumption**. To build the engine, the following packages are materialized in a strict, non-circular sequence.
+
+| Layer | Package Path | Responsibility |
+| :--- | :--- | :--- |
+| **L1** | `internal/identity` | The Root. PublicID, LogicHash, and Identity Quads. |
+| **L2** | `internal/registry` | SQLite Engine, WAL-mode persistence, `nodes` & `edges` tables. |
+| **L3** | `internal/spec` | Specbook YAML parser and normalization logic. |
+| **L4** | `internal/scanner` | Sensory layer. Extracts AST phenotype from existing code. |
+| **L5** | `internal/staging` | The Virtual Loom. In-memory VFS for State 4 mutations. |
+| **L6** | `internal/surgeon` | The Scalpel. `go/ast` and `dave/dst` splicing logic. |
+| **L7** | `internal/audit` | The Hexagonal Gates. Behavioral and Physics verification. |
+| **L8** | `internal/auditlog` | Immutable telemetry and event-sequencing for the UI. |
+| **L9** | `internal/metamorphosis` | State Machine. Manages the 5-state node lifecycle. |
+| **10** | `internal/orchestrator` | The CRA Solver. DAG traversal and conflict resolution. |
+| **11** | `internal/telemetry` | WebSocket server and 60Hz UI event coalescing. |
+| **12** | `internal/mcp` | Transport Boundary. Model Context Protocol interface. |
+| **13** | `cmd/saayn` | Entry Point. CLI bootstrap and signal handling. |
+
+## **12.2. The Deterministic Build Order (The DAG Sequence)**
+To materialize Genesis, the Engine must sequence nodes in the following order. Reversing this order or attempting parallel synthesis across layer boundaries results in a **Deadlock**.
+
+**Build Order:** 1. **`identity`** (Leaf)
+2. **`registry`**
+3. **`spec`**
+4. **`scanner`**
+5. **`staging`**
+6. **`surgeon`** & **`audit`** (Siblings)
+7. **`auditlog`**
+8. **`metamorphosis`**
+9. **`orchestrator`**
+10. **`telemetry`**
+11. **`mcp`**
+12. **`cmd/saayn`** (Apex)
+
+## **12.3. Dependency Rules (Non-Bypassable)**
+
+* **12.3.1. The Gravity Law:** A package may only depend on packages in **lower layers**. Upward dependencies (e.g., `identity` importing `orchestrator`) trigger an immediate **Preflight FAIL**.
+* **12.3.2. Sibling Isolation:** `surgeon`, `audit`, and `auditlog` occupy the same layer (L6-L8) but **must not import each other**. They are coordinated exclusively by `metamorphosis`.
+* **12.3.3. The Zero-Logic Entry:** `cmd/saayn` is a shell. It may only import `mcp` and `orchestrator`. It is forbidden from containing business logic or direct AST manipulation.
+
+## **12.4. Forbidden Patterns (Architectural Crimes)**
+* **The Circular Feedback:** `metamorphosis` → `orchestrator`. (The state machine must be a servant to the orchestrator).
+* **Boundary Bleed:** Any `internal` package importing `telemetry` or `mcp`. (Transport and UI are observers, not participants).
+* **Registry Bypass:** Any package performing direct file I/O without going through `staging` or `registry`.
+
+## **12.5. Rationale: The Self-Sustaining Loop**
+By defining Genesis using this topology, we allow the engine to treat itself as a **Specbook**. 
+* **The Test:** If we update the `identity` package, the Orchestrator will see the drift, trigger a **Sovereignty Shockwave**, and force a re-reconciliation of every layer above it. 
+* **The Proof:** If the engine can successfully "Surround-Hydrate" its own `metamorphosis` package without breaking the DAG, the **Greenfield Protocol** is verified.
 
