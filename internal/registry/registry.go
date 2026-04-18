@@ -115,3 +115,35 @@ func (r *Registry) GetNode(nodeID string) (identity.IdentityQuad, string, error)
 	q.NodeID = parsedID
 	return q, maturity, nil
 }
+
+// [L2 PATCH] Add to internal/registry/registry.go
+// GetNodeWithAuthority retrieves the full Quad, maturity, and authority class.
+func (r *Registry) GetNodeWithAuthority(nodeID string) (identity.IdentityQuad, string, int, error) {
+	var q identity.IdentityQuad
+	var maturity string
+	var authClass int
+	var k, v, rec, mod, pkg, sym string
+	var arity int
+
+	query := `SELECT kind, visibility, module_path, package_path, receiver, 
+	                 symbol_name, arity, contract_id, logic_hash, 
+	                 dependency_hash, maturity, authority_class FROM nodes WHERE node_id = ?`
+
+	err := r.db.QueryRow(query, nodeID).Scan(
+		&k, &v, &mod, &pkg, &rec, &sym, &arity,
+		&q.ContractID, &q.LogicHash, &q.DependencyHash, &maturity, &authClass,
+	)
+	if err != nil {
+		return q, "", 0, fmt.Errorf("registry: node %s not found: %w", nodeID, err)
+	}
+
+	// Reconstruct via L1 Parser for grammar enforcement
+	rawID := fmt.Sprintf("%s.%s.%s.%s.%s.%s.%d", k, v, mod, pkg, rec, sym, arity)
+	parsedID, err := identity.ParseNodeID(rawID)
+	if err != nil {
+		return q, "", 0, err
+	}
+	q.NodeID = parsedID
+
+	return q, maturity, authClass, nil
+}
