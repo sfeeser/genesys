@@ -700,6 +700,7 @@ To ensure high availability, the engine implements a **Hierarchical Credential L
 | `GENESIS_DEEP_API_KEY`| Secret | Local DEEP credential | `GENESIS_API_KEY` |
 | `GENESIS_API_DELAY` | Integer| Cooldown in Seconds | 0 (No Delay) |
 
+
 #### **13.3 Temporal Guardrail (Sequential Spacing)**
 Each tier enforces a shared sequential spacing invariant. **FAST** and **DEEP** tiers are independent; no temporal coordination exists across tiers.
 
