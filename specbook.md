@@ -163,10 +163,11 @@ Vectors are no longer "floating." They are bound to a specific node AND a specif
 ```sql
 CREATE TABLE inference_profiles (
     profile_id TEXT PRIMARY KEY,
+    tier TEXT NOT NULL CHECK (tier IN ('FAST', 'DEEP', 'EMBED')),
     model_name TEXT NOT NULL,
     model_revision TEXT NOT NULL,
     dimensions INTEGER NOT NULL,
-    distance_metric TEXT NOT NULL,
+    distance_metric TEXT NOT NULL DEFAULT 'cosine',
     summary_schema_version TEXT NOT NULL,
     summary_prompt_hash TEXT NOT NULL,
     chunking_policy TEXT NOT NULL,
