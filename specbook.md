@@ -311,6 +311,62 @@ When the CRA generates code for State 4 (Hydrating), the Surgeon provides a "Saf
 * **Receiver Stability:** If a method is being added to a struct, the Surgeon ensures it uses the same receiver name (e.g., `(f *Fighter)`) as the existing method set.
 
 
+# **Chapter 6: The Hexagonal Gates**
+
+The Hexagonal Gates are a set of six mandatory verification layers that every mutation workset must clear before moving from **State 4 (Hydrating)** to **State 5 (Sequenced)**.
+
+### **The "Fail-Fast" Design**
+The gates are ordered by **Computational Cost**. Gate A (Fast AST check) happens thousands of times a minute. Gate D (Full Compilation) and Gate F (Complexity) only happen once a candidate has been "Hydrated." This ensures the engine doesn't waste expensive "Deep LLM" or "Full Build" time on code that can't even pass a basic type-check.
+
+## **6.1. Gate A: Physics (Structural Integrity)**
+* **Mechanism:** `go/ast` + `go/types`.
+* **The Check:** Does the code parse? Are types consistent? If the node is a struct, does it implement the interfaces it claims to? 
+* **Failure Mode:** "Syntax Error" or "Interface Mismatch." The solver is sent back to rethink the signature.
+
+## **6.2. Gate B: Identity (The Quad Anchor)**
+* **Mechanism:** Registry Comparator.
+* **The Check:** Does the generated node match the **Identity Quad** (NodeID, C-ID, L-ID, D-ID) authorized in the **PLAN** stage? 
+* **The Authorized Delta:** This gate allows for "Approved Drift"—if the CRA intended to change a signature, Gate B verifies the new signature matches the **Specbook** exactly.
+* **Failure Mode:** "Identity Drift." Usually indicates the agent hallucinated a signature change it wasn't authorized to make.
+
+## **6.3. Gate C: Behavioral (Invariant Verification)**
+* **Mechanism:** Go Test Runner + Sandbox.
+* **The Check:**
+    * **C1 (Local):** Do the node’s internal table-driven tests pass?
+    * **C2 (Global):** Do the package-level invariants remain intact?
+* **The Sandbox:** Tests are run in a **Virtual File System (VFS)** to prevent side effects on the actual repository.
+* **Failure Mode:** "Logic Regression." The solver must rewrite the body to satisfy the behavioral contract.
+
+## **6.4. Gate D: Genomic (Full-System Compilation)**
+* **Mechanism:** `go build` + `go vet`.
+* **The Check:** Does the entire package (including all callers and dependencies) still compile with the new node in place? 
+* **The SCC Batch:** For cyclic dependencies, this gate is cleared only when the **entire cluster** is ready.
+* **Failure Mode:** "Integration Failure." Often reveals "Ghost Dependencies" or circular imports that weren't caught in the local AST scan.
+
+## **6.5. Gate E: Replay (Deterministic Stability)**
+* **Mechanism:** Canonical Re-Parser.
+* **The Check:** If the engine takes the materialized code and re-calculates its **Logic Hash (L-ID)**, does it match the hash stored in the **Mutation Workset**?
+* **The Normalizer:** This gate ignores whitespace, comment formatting, and import ordering to ensure only **Semantic Determinism** is measured.
+* **Failure Mode:** "Nondeterministic Materialization." Indicates the **Surgical Inner Loop** introduced an unintentional change.
+
+## **6.6. Gate F: Cost (Architectural Fitness)**
+* **Mechanism:** Complexity Heuristics.
+* **The Check:** Did the synthesis stay within the "Complexity Budget"?
+    * Is the **Cyclomatic Complexity** too high?
+    * Did the solver introduce too many **Adapter/Shim** nodes?
+    * Is the **Fan-out** (dependency count) excessive?
+* **Failure Mode:** "Architectural Bloat." The CRA is forced to find a simpler solution or escalate to the user for a manual refactor.
+
+
+
+
+
+
+
+
+
+
+
 
 
 
