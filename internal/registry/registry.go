@@ -15,6 +15,18 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
+const bootstrapSchema = `
+-- ... (existing nodes, inference_profiles, semantic_records)
+
+-- CHAPTER 2.2: THE SEMANTIC INDEX
+-- This virtual table handles high-dimensional vector similarity.
+-- Dimensions: 3072 (Standard for EMBED-tier models)
+CREATE VIRTUAL TABLE IF NOT EXISTS semantic_index USING vss0(
+  vector(3072)
+);
+`
+
+
 var ErrNodeNotFound = errors.New("registry: node not found")
 
 type Registry struct {
@@ -199,4 +211,38 @@ func (r *Registry) Close() error {
 		return fmt.Errorf("registry: close failed: %w", err)
 	}
 	return nil
+}
+
+type VectorMatch struct {
+	NodeID   string
+	Distance float32
+}
+
+// QueryNearestNeighbors executes a cosine similarity search in the VSS virtual table.
+func (r *Registry) QueryNearestNeighbors(vector []float32, limit int) ([]VectorMatch, error) {
+	// CHAPTER 2: The Physical Semantic Index lookup
+	query := `
+		SELECT s.node_id, v.distance
+		FROM semantic_index v
+		JOIN semantic_records s ON v.record_id = s.record_id
+		WHERE v.vector MATCH ? 
+		AND v.k = ?
+		AND s.is_stale = 0`
+	
+	// Implementation note: MATCH requires a serialized blob of the float32 array.
+	rows, err := r.db.Query(query, vector, limit)
+	if err != nil {
+		return nil, fmt.Errorf("registry: vss lookup failure: %w", err)
+	}
+	defer rows.Close()
+
+	var matches []VectorMatch
+	for rows.Next() {
+		var m VectorMatch
+		if err := rows.Scan(&m.NodeID, &m.Distance); err != nil {
+			return nil, err
+		}
+		matches = append(matches, m)
+	}
+	return matches, nil
 }
