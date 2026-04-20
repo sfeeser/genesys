@@ -38,9 +38,9 @@ These are the standalone **Cobra CLI commands** exposed to users. Each command s
 - **What it does:** Performs semantic search against the genome and returns the most relevant results based on user intent. Supports scoping to package, file, or node level.
 - **How it does it:** Vectorizes the natural language query and performs local cosine similarity search. Returns matching items along with their Blast Radius.
 - **Flags:**
-  - `--package`   — Scope search to package level
-  - `--gofile`    — Scope search to Go file level
-  - `--node`      — Scope search to node level (default)
+  - `--package` — Scope search to package level
+  - `--gofile` — Scope search to Go file level
+  - `--node` — Scope search to node level (default)
 - **Dependencies:** `internal/access`, `internal/index`, `internal/registry`
 - **Potentially Destructive?** **No**.
 
@@ -57,47 +57,6 @@ These are the standalone **Cobra CLI commands** exposed to users. Each command s
 - **How it does it:** Reads `scaffolding.yaml`, processes packages/files in hydration_order (core → leaf), writes the files, and triggers a targeted `enrich` pass on the new code so that high-quality intent from scaffolding is properly merged into the genome.
 - **Dependencies:** `internal/scaffolding`, `internal/scanner`, `internal/registry`
 - **Potentially Destructive?** **Yes**. Writes real `.go` files to disk.
-
-Here's my full, honest review of the entire pipeline as it stands now.
-
-### Overall Impression
-The lifecycle is coming together nicely. The biological naming theme is consistent and memorable. The flow from observation → understanding → verification → planning → execution is logical.
-
-However, there are still some inconsistencies, small inaccuracies, and areas that need tightening — especially around naming, mechanism clarity, and flow between stages.
-
-### Detailed Feedback & Suggested Fixes
-
-**Stage 1: The Anchor (init)**  
-→ Good. No major issues. The "explicitly forced" part is clear.
-
-**Stage 2: The Sight (enrich)**  
-→ Solid, but the mechanism is a bit long. It's acceptable.
-
-**Stage 3: Verify**  
-→ Name is now clean (good call dropping "(audit)").  
-→ The last bullet ("After a hydrate operation...") feels slightly tacked on. We can make it smoother.
-
-**Stage 4: Structural Mapping (graph)**  
-→ Good, but the name is still a bit long. "Structural Mapping" is accurate but not as punchy as the others.
-
-**Stage 5: Discovery (locate)**  
-→ Good. The name change from "search-intent" to "locate" works well.
-
-**Stage 6: Gatekeeper (Eval)**  
-→ This one feels the weakest right now.  
-  - "Gatekeeper (Eval)" is clunky.  
-  - It still says it defines the "Desired State" in the original version you posted earlier, but here it's corrected.  
-  - Mechanism is vague ("performs a thorough review").
-
-**Stage 7: Scaffolding**  
-→ Mostly good, but has a few issues:
-  - It says `genesis.yaml` in some places and `specbook.md` in the mechanism → inconsistency.
-  - The "Ingests the `specbook.md` Specbook" line feels off.
-  - The structure section is very long and dense.
-
-### My Recommended Cleaned-Up Version
-
-Here's a polished, consistent version of all stages:
 
 ---
 
@@ -148,24 +107,35 @@ Here's a polished, consistent version of all stages:
 - **Purpose:** Define the "Desired State" — the complete structural scaffold and high-level organization of the project that later stages will hydrate with implementation code.  
 - **What it does:** This is the engine’s non-destructive planning phase. It analyzes the current codebase, ingests the Specbook, and produces a validated blueprint.  
 - **Mechanism:** Ingests the Specbook, validates architectural constraints, calculates a dependency graph, and writes `scaffolding.yaml`. For each package and file, it generates a clear responsibility statement and 3072-dimensional embedding.  
-- **Structure defined:** (keep your current detailed list — it's good)  
+- **Structure defined:**  
+  - A list of **feature/domain packages** under `internal/`, ordered from core/central features toward supporting/leaf features.  
+  - For each package: a list of `.go` files, ordered from core logic toward supporting files.  
+  - Use `/internal/` for all core domain and business logic (protected from external imports).  
+  - Use `/cmd/<appname>/` as the ultimate leaf that only wires dependencies and starts the application (contains no business logic).  
+  - Every package and every `.go` file must have:  
+    - A **clear, one-sentence responsibility statement**  
+    - A **3072-dimensional vector embedding** (generated so that local agents can semantically search and select the most appropriate package or file when adding or moving nodes in later stages)  
+  - **Dependency graph** must be calculated and validated. Acyclic dependencies are **strongly preferred**. Small, well-justified cycles are allowed when they are resolved cleanly with interfaces defined in the core.  
+  - Avoid deep directory nesting — favor shallow, cohesive packages.  
+  - **Refactor strategy:** Prefer changes in leaf packages first. Core packages may be extended or refactored when doing so leads to cleaner, more idiomatic code, reduces duplication, or better expresses business rules. Any core changes must be reflected back into the scaffolding.yaml to keep the Desired State in sync.  
 - **Destructive?** **No** (only affects the output file; previous version is archived).
 
-**Stage 8: Hydration**
-- **Purpose:** To surgically implement real business logic into the hollow codebase produced by hydration, while safely handling necessary core extensions.
-- **What it does:** This stage takes the hydrated skeleton and intelligently fills in the function bodies, adding or extending core packages when required by leaf functionality.
-- **Mechanism:**
-  - Reads the Desired State from `scaffolding.yaml` and the current genome state.
-  - Processes nodes in **hydration_order** (core → leaf).
-  - For each node:
-    - Generates high-quality implementation code using the DEEP LLM, guided by the responsibility statement and surrounding context.
-    - If a leaf requirement reveals a missing abstraction or service in the core, the Surgeon proposes the necessary core extension.
-    - Core extensions are applied first, followed by a re-hydration of affected leaf nodes if needed.
-  - After code is written, it triggers a mandatory `verify` pass to detect any drift and confirm consistency.
-  - Updates the genome with new `logic_hash`, `maturity` ("implemented"), and updated dependencies.
-- **Edge Case Handling:**
-  - When leaf functionality requires new core behavior, the Surgeon creates a formal proposal for core changes, applies them safely, and updates the scaffolding.yaml to keep the Desired State in sync.
-  - Circular dependency risks are minimized by strict core-first ordering.
+**Stage 8: Hydration**  
+- **Purpose:** To turn the hollow skeleton produced by hydration into fully implemented, working code while safely handling necessary core extensions.  
+- **What it does:** This stage takes the hydrated skeleton and intelligently fills in the function bodies, adding or extending core packages when required by leaf functionality.  
+- **Mechanism:**  
+  - Reads the Desired State from `scaffolding.yaml` and the current genome state.  
+  - Processes nodes in **hydration_order** (core → leaf).  
+  - For each node:  
+    - Generates high-quality implementation code using the DEEP LLM, guided by the responsibility statement and surrounding context.  
+    - If a leaf requirement reveals a missing abstraction or service in the core, the stage proposes the necessary core extension.  
+    - Core extensions are applied first, followed by a re-hydration of affected leaf nodes if needed.  
+  - After code is written, it triggers a mandatory `verify` pass to detect any drift and confirm consistency.  
+  - Updates the genome with new `logic_hash`, `maturity` ("implemented"), and updated dependencies.  
+- **Edge Case Handling:**  
+  - **Core Extension Feedback Loop:** Core-to-leaf ordering is treated as a strong guideline, not an absolute rule. When leaf functionality requires new core behavior, core extensions are allowed. However, to prevent infinite oscillation, each synthesis run tracks a `synthesis_iteration` counter and a `core_extension_count`. Automatic core extensions are limited to a maximum of 2 per synthesis session. After the second extension, further core changes require user confirmation or a manual re-scaffolding. If no measurable progress (new nodes materialized or logic_hash stabilized) occurs after 3 full cycles, the leaf node is implemented with whatever core services are currently available and flagged as “partial_implementation”.  
+  - **Enrich Overwrite Cycle:** The original DEEP intent is preserved. Each node maintains both `original_responsibility` and `original_business_purpose` (never overwritten) as well as `current_responsibility` and `current_business_purpose` fields. This allows later stages to judge how well the implemented code matches the original intent.  
+  - **Verify False-Positive Drift Loop:** Verify behavior is modulated by node maturity level. Nodes in “Synthesizing” state have relaxed drift detection. Verify only flags changes as unauthorized drift when the node is in “Anchored” or “Implemented” maturity.  
+  - **Scaffolding.yaml Desync Loop:** `scaffolding.yaml` is treated as a living document. When core extensions or new files are added during synthesis, new entries are appended to `scaffolding.yaml` with state tracking fields (`state`, `last_modified_by`, `synthesis_version`).  
+  - **Hydrate ↔ Synthesis Ordering Deadlock:** When Synthesis needs to create a brand-new file or package that did not exist in the original scaffolding, it first appends the new node to `scaffolding.yaml` with `state: "planned"`, then triggers a targeted (partial) `hydrate` only for the new nodes. Previously hydrated nodes retain their existing maturity state.  
 - **Destructive?** **Yes**. It performs physical writes to source code files and updates the genome.
-
-
