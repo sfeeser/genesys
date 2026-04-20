@@ -276,7 +276,6 @@ When the engine identifies a **Strongly Connected Component**, the affected node
 * **Coordinated Vibration:** During the **Hydrating** state, the entire Blob vibrates in unison. 
 * **The Deadlock Signal:** If the Vibration Amplitude increases without a change in State, it signifies a **Logic Deadlock**, indicating the CRA is thrashing between incompatible constraints within the cycle.
 
-
 ### **C. Tension Lines (Constraint Mapping)**
 Edges between nodes are rendered as "Tension Lines" that change color based on the **Acceptance Envelope** status:
 * **Red (High Tension):** Gate A or B failure (Type/Contract mismatch).
@@ -302,7 +301,6 @@ Genesis utilizes a dual-syntax-tree approach to ensure that generated code is in
 
 * **`go/ast` (The X-Ray):** Used during the **GRAPH** and **PLAN** stages to perform high-speed type checking and dependency tracing. It is the "Scientific" view of the code.
 * **`dave/dst` (The Scalpel):** Used during the **APPLY** stage. Unlike the standard library AST, the **Decorated Syntax Tree (DST)** preserves "decorations" (comments, line breaks, and grouping). This ensures that when Genesis edits a function, it doesn't "sanitize" away the human-written documentation around it.
-
 
 ## **5.2. The Splicing Protocol**
 The Surgeon follows a strict "Targeted Replacement" strategy rather than a full-file rewrite.
@@ -731,3 +729,153 @@ The implementation of this chapter **MUST** align with the authoritative SDK sur
 
 This reference serves as the normative authority for all `ClientConfig` and `GenerateContent` signatures.
 
+### **# CHAPTER 14: THE COMMAND SURFACE (COBRA APEX)**
+
+This chapter defines the **Apex (L13)** of the Genesis Engine. The command surface is the final gate where human intent is translated into deterministic machine action. It must enforce the **Boundary Laws** of the engine, ensuring that no command can bypass the **Registry (L2)** or the **Auditor (L8)**.
+
+---
+
+### **14.1. The Root Shell Boundary**
+
+The Root Shell is responsible for **Temporal Injection** and **Determinant Discovery**. It is the only package allowed to access the system clock or raw environment variables directly.
+
+* **Temporal Authority:** Every command must receive a single `auditUnix` timestamp at the moment of execution. This timestamp serves as the "Common Clock" for all subsequent logic transitions.
+* **Context Ownership:** The Root Shell manages the `signal.NotifyContext`. Any command that hangs or exceeds its operational deadline must be terminated via the context tree, returning **Exit Code 130**.
+
+---
+
+### **14.2. Command Taxonomy**
+
+Commands in Genesis are classified into three tiers based on their impact on the **Code Genome**.
+
+| Tier | Name | Impact | Requirement |
+| :--- | :--- | :--- | :--- |
+| **Tier 1** | **Sensory** | Read-Only | Requires valid API Determinants (FAST/EMBED). |
+| **Tier 2** | **Analytical**| State Mutation | Requires L2 Registry Write Access. |
+| **Tier 3** | **Surgical** | Disk Mutation | Requires Hexagonal Gate approval (L12). |
+
+---
+
+### **14.3. Reserved Command Surface**
+
+The following commands are defined as **Normative**. Their logic signatures are anchored to specific internal authorities.
+
+#### **A. Operational Commands**
+* **`init`**: Bootstraps the `.genesis/` infrastructure.
+    * *Physics*: If `genome.db` exists, abort unless `--force` is set.
+* **`ping`**: Validates the **Cognitive Triad**.
+    * *Physics*: Must verify connectivity and API key validity for FAST, DEEP, and EMBED tiers.
+
+#### **B. Discovery & Search**
+* **`enrich`**: Hydrates the registry from the physical disk.
+    * *Intended Authority*: `internal/orchestrator`
+    * *Action*: Uses the **FAST** tier to scan and map existing source code.
+* **`search-intent`**: Semantic lookup of logic.
+    * *Intended Authority*: `internal/access`
+    * *Action*: Executes cosine similarity on vector embeddings.
+
+#### **C. Materialization (The Conductor)**
+* **`gen`**: The **Composite Shortcut**.
+    * *Action*: Orchestrates the Top-Down flow: `Spec` → `Conceptual` → `Hollow` → `Apply`.
+    * *Invariant*: Must perform a structural isomorphism check (Scan-after-Generate) before completing.
+
+---
+
+### **14.4. Deterministic Exit Codes**
+
+To ensure Genesis is compatible with high-reliability CI/CD pipelines, exit codes are strictly typed and must never depend on human-readable strings.
+
+| Exit Code | Classification | Meaning |
+| :--- | :--- | :--- |
+| **0** | **SUCCESS** | Operation completed within spec boundaries. |
+| **1** | **PANIC** | General failure, unhandled error, or boundary violation. |
+| **2** | **DETERMINANT** | Missing or malformed determinants (e.g., missing API keys). |
+| **126** | **ACCESS** | Operation blocked by the Access Tier (Permission Denied). |
+| **130** | **INTERRUPTED** | User termination (`SIGINT`) or context timeout. |
+
+---
+
+### **14.5. The Round-Trip Law**
+
+No command that generates source code (e.g., `gen`) is permitted to exit successfully unless the resulting file can be immediately read back by the **Scanner (L4)** and produce the exact same **NodeID**. If the round-trip fails, the command must rollback the surgery and exit with **Code 1**.
+
+
+### **14.6. Governance**
+
+Any addition to the Command Surface requires a revision to this chapter. Commands added without being registered in **Section 14.3** are considered "Ephemeral" and are forbidden from mutating the **Physical Registry (L2)**.
+
+
+
+
+
+### **# CHAPTER 14: THE COMMAND SURFACE (COBRA APEX) – RECONCILED**
+
+This chapter defines the **Apex (L13)**: the deterministic boundary between the Operating System and the Genesis Engine. It codifies the shell's responsibility to ingest environmental entropy and transform it into the typed constants required by the internal authorities.
+
+---
+
+### **14.1. Root Shell Boundary**
+
+The root command serves as the engine’s **Hardware Abstraction Layer**. It is the only component permitted to touch non-deterministic OS inputs.
+
+* **Context Ownership:** The root command initializes the `signal.NotifyContext` tree. It is responsible for propagating cancellation signals to all sub-commands, ensuring the engine respects **SIGINT/SIGTERM**.
+* **Audit Clock Injection:** A single `auditUnix` timestamp is generated at the shell boundary: `time.Now().UTC().Unix()`. This value is passed down to all internal packages to ensure temporal coherence across the transaction.
+* **Determinant Discovery:** The shell alone owns the logic for:
+    * Reading environment variables (`GENESIS_*`).
+    * Parsing CLI flags (`--path`, `--spec`, `--force`).
+    * Mapping these to typed configurations (e.g., `cognition.Config`).
+
+---
+
+### **14.2. Command → Authority Mapping**
+
+To prevent logic leakage, CLI commands must act as thin orchestrators. They assemble the necessary internal handles and delegate execution to the established **Internal Authority**.
+
+| Command | Primary Authority | Side Effects | Notes |
+| :--- | :--- | :--- | :--- |
+| **`init`** | `internal/registry` | Filesystem + DB | Destructive; guarded by `--force`. |
+| **`ping`** | `internal/cognition` | Network (Sensory) | External API verification only. |
+| **`enrich`** | `internal/orchestrator`| DB Writes | Maps Disk state to Registry. |
+| **`gen`** | `internal/orchestrator`| DB + Filesystem | Maps Spec state to Disk. |
+
+---
+
+### **14.3. Determinant Ingestion Law**
+
+This law ensures that internal logic remains pure and testable by forbidding environment-awareness outside of the `cmd/` directory.
+
+* **Inversion of Control:** Internal packages (L1–L12) **MUST NOT** call `os.Getenv` or infer defaults from the environment.
+* **Validation:** The Apex must validate all required inputs. If a required environment variable is missing, the shell must return `ErrDeterminantMissing`, triggering **Exit Code 2**.
+
+---
+
+### **14.4. Exit Code Contract**
+
+Genesis communicates its failure state to the host system via typed exit codes. These mappings must be enforced using `errors.Is` against sentinel errors, never via human-readable string matching.
+
+| Code | Meaning | Implementation Reference |
+| :--- | :--- | :--- |
+| **0** | **Success** | `nil` error returned to `Execute()`. |
+| **1** | **Panic / Boundary Violation** | General errors or `ErrBoundaryViolation`. |
+| **2** | **Determinant Error** | `ErrDeterminantMissing`. |
+| **126** | **Access Denied** | `ErrAccessDenied` (Gatekeeper refusal). |
+| **130** | **Interrupted** | `context.Canceled` or `SIGINT`. |
+
+---
+
+### **14.5. Round-Trip Law (Code Generation)**
+
+For any command that performs surgical disk mutation (e.g., `gen`), the engine must enforce structural isomorphism.
+
+1.  **Enforcement Location:** This is enforced within the `orchestrator.Converge` cycle, not the CLI.
+2.  **Constraint:** A generated artifact must be immediately readable by the **Scanner (L4)** and produce a **NodeID** that is exactly equivalent to the intent stored in the **Registry (L2)**.
+3.  **CLI Responsibility:** If the orchestrator reports a round-trip failure, the CLI must bubble up the error and exit with **Code 1**.
+
+---
+
+### **14.6. Command Registration Law**
+
+To maintain a secure and auditable surface, all commands must be explicitly registered in the `init()` block of their respective files within `cmd/genesis/`. 
+
+* Any logic that is not reachable via a registered Cobra command is considered non-authoritative.
+* Commands are prohibited from implementing business logic; they are limited to **Config Assembly** and **Authority Invocation**.
