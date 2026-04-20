@@ -151,4 +151,21 @@ Here's a polished, consistent version of all stages:
 - **Structure defined:** (keep your current detailed list — it's good)  
 - **Destructive?** **No** (only affects the output file; previous version is archived).
 
+**Stage 8: Hydration**
+- **Purpose:** To surgically implement real business logic into the hollow codebase produced by hydration, while safely handling necessary core extensions.
+- **What it does:** This stage takes the hydrated skeleton and intelligently fills in the function bodies, adding or extending core packages when required by leaf functionality.
+- **Mechanism:**
+  - Reads the Desired State from `scaffolding.yaml` and the current genome state.
+  - Processes nodes in **hydration_order** (core → leaf).
+  - For each node:
+    - Generates high-quality implementation code using the DEEP LLM, guided by the responsibility statement and surrounding context.
+    - If a leaf requirement reveals a missing abstraction or service in the core, the Surgeon proposes the necessary core extension.
+    - Core extensions are applied first, followed by a re-hydration of affected leaf nodes if needed.
+  - After code is written, it triggers a mandatory `verify` pass to detect any drift and confirm consistency.
+  - Updates the genome with new `logic_hash`, `maturity` ("implemented"), and updated dependencies.
+- **Edge Case Handling:**
+  - When leaf functionality requires new core behavior, the Surgeon creates a formal proposal for core changes, applies them safely, and updates the scaffolding.yaml to keep the Desired State in sync.
+  - Circular dependency risks are minimized by strict core-first ordering.
+- **Destructive?** **Yes**. It performs physical writes to source code files and updates the genome.
+
 
