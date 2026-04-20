@@ -58,10 +58,7 @@ These are the standalone **Cobra CLI commands** exposed to users. Each command s
 - **Dependencies:** `internal/scaffolding`, `internal/scanner`, `internal/registry`
 - **Potentially Destructive?** **Yes**. Writes real `.go` files to disk.
 
----
-
-### Core Processing Stages
-
+## Core Processing Stages
 **Stage 1: The Anchor (init)**  
 - **Purpose:** To establish the persistent "Memory" of the project.  
 - **What it does:** It materializes the physical infrastructure required for Genesis to function.  
@@ -81,7 +78,7 @@ These are the standalone **Cobra CLI commands** exposed to users. Each command s
 **Stage 3: The Verify**  
 - **Purpose:** To ensure the engine’s internal "Truth" matches physical reality and to detect Genome Drift.  
 - **What it does:** It compares the stored genome against the current codebase to identify any unauthorized changes.  
-- **Mechanism:** Calculates a Logic Hash based on AST structure for every node and compares it to the stored value. Ignores cosmetic changes. After `hydrate`, it confirms that new nodes were correctly reconciled by enrich.  
+- **Mechanism:** Calculates a Logic Hash based on AST structure for every node and compares it to the stored value. Ignores cosmetic changes. After Stage 8 (The Skeleton), it confirms that new nodes were correctly reconciled by enrich.  
 - **Destructive?** **No**.
 
 **Stage 4: Structural Mapping (graph)**  
@@ -104,7 +101,7 @@ These are the standalone **Cobra CLI commands** exposed to users. Each command s
 - **Destructive?** **No**.
 
 **Stage 7: Scaffolding**  
-- **Purpose:** Define the "Desired State" — the complete structural scaffold and high-level organization of the project that later stages will hydrate with implementation code.  
+- **Purpose:** Define the "Desired State" — the complete structural scaffold and high-level organization of the project that later stages will bring to life.  
 - **What it does:** This is the engine’s non-destructive planning phase. It analyzes the current codebase, ingests the Specbook, and produces a validated blueprint.  
 - **Mechanism:** Ingests the Specbook, validates architectural constraints, calculates a dependency graph, and writes `scaffolding.yaml`. For each package and file, it generates a clear responsibility statement and 3072-dimensional embedding.  
 - **Structure defined:**  
@@ -120,55 +117,43 @@ These are the standalone **Cobra CLI commands** exposed to users. Each command s
   - **Refactor strategy:** Prefer changes in leaf packages first. Core packages may be extended or refactored when doing so leads to cleaner, more idiomatic code, reduces duplication, or better expresses business rules. Any core changes must be reflected back into the scaffolding.yaml to keep the Desired State in sync.  
 - **Destructive?** **No** (only affects the output file; previous version is archived).
 
-**Stage 8: Skeleton**  
-- **Purpose:** To turn the hollow skeleton produced by hydration into fully implemented, working code while safely handling necessary core extensions.  
-- **What it does:** This stage takes the hydrated skeleton and intelligently fills in the function bodies, adding or extending core packages when required by leaf functionality.  
+**Stage 8: The Skeleton**  
+- **Purpose:** To materialize the Desired State into a real but hollow Go codebase skeleton (the "dry bones") that compiles cleanly.  
+- **What it does:** This stage generates the actual directory structure, packages, and `.go` files with fully resolved signatures, imports, structs, interfaces, and function signatures, but leaves all function bodies empty.  
+- **Mechanism:**  
+  - Reads the Desired State from `scaffolding.yaml`.  
+  - Processes packages and files in **hydration_order** (core → leaf) using topological sort of the dependency graph.  
+  - For each package and file:  
+    - Creates the necessary directories if they don't exist.  
+    - Generates the `.go` file with correct package declaration, imports, structs, interfaces, and function signatures.  
+    - Leaves function bodies hollow (`// TODO: implement according to responsibility`).  
+  - After all files are written, it triggers a targeted `enrich` pass on the newly created files so that the high-quality intent from scaffolding is properly merged into the genome.  
+- **Destructive?** **Yes**. It writes real `.go` files to disk.
+
+**Stage 9: Synthesis**  
+- **Purpose:** To breathe life into the skeleton by filling in real business logic and safely handling necessary core extensions.  
+- **What it does:** This stage takes the hollow skeleton produced by Stage 8 and intelligently generates the actual implementation code for each function, while safely extending the core when leaf functionality requires it.  
 - **Mechanism:**  
   - Reads the Desired State from `scaffolding.yaml` and the current genome state.  
   - Processes nodes in **hydration_order** (core → leaf).  
   - For each node:  
-    - Generates high-quality implementation code using the DEEP LLM, guided by the responsibility statement and surrounding context.  
-    - If a leaf requirement reveals a missing abstraction or service in the core, the stage proposes the necessary core extension.  
-    - Core extensions are applied first, followed by a re-hydration of affected leaf nodes if needed.  
+    - Generates high-quality implementation code using the DEEP LLM, guided by the responsibility statement, surrounding context, and SpecBook intent.  
+    - If a leaf requirement reveals a missing abstraction or service in the core, the stage follows the defined mutation judgement process.  
+    - Core extensions are applied first, followed by a targeted re-run of Stage 8 (The Skeleton) for affected leaf nodes if needed.  
   - After code is written, it triggers a mandatory `verify` pass to detect any drift and confirm consistency.  
   - Updates the genome with new `logic_hash`, `maturity` ("implemented"), and updated dependencies.  
-
-- **Edge Case Handling:**
-
-  **1. Infinite Re-Hydration / Re-Synthesis Loop**  
-  When Synthesis determines that a node requires additional functionality to fulfill the SpecBook, it must distinguish between two cases:  
-  - **Adding a new function**: This is acceptable and expected. The new function is appended to `scaffolding.yaml` with `state: "planned"`. A targeted (partial) `hydrate` is then called only for the new node(s). This is expected to resolve in one cycle in most cases.  
-  - **Mutating an existing function**: This is potentially dangerous due to blast radius. The following mandatory process is followed:  
-    1. `graph` is automatically called to compute the full blast radius of the proposed mutation.  
-    2. A mutation plan is created containing the proposed change and the list of all affected nodes.  
-    3. This mutation plan is passed to the DEEP LLM for judgement. The LLM must return one of three verdicts:  
-       - **OK to mutate the current node**  
-       - **Not OK to mutate the current node** — create a new function instead  
-       - **Code bloat risk** — explicitly flag the risk and propose a cleaner refactoring approach.  
-  Automatic core extensions are limited. If no measurable progress occurs after 3 full cycles, the leaf node is implemented with whatever core services are currently available and marked as `partial_implementation`.
-
-  **2. Partial Implementation Staleness**  
-  Hydration and Synthesis must maintain clear state for each node. If a node cannot be fully resolved after three synthesis attempts, the process halts for that node, marks it as `broken` (or `partial_implementation`), and moves on. The critical requirement is visibility: the node must be clearly discoverable as broken via telemetry/visual canvas (red node) and `locate` / `hunt` so the root cause can be identified and addressed later.
-
-  **3. Scaffolding.yaml Growth and Bloat**  
-  `scaffolding.yaml` holds packages and Go files, not individual nodes. Some bloat from incremental core extensions will be tolerated. We will not proactively consolidate or add `deprecated` / `superseded_by` fields at this time. Gatekeeper and Scaffolding must handle a growing scaffolding file gracefully.
-
-  **4. Maturity State Conflicts During Concurrent Operations**  
-  Genesis is a single-user system. All operations will be processed sequentially. No node-level locking or global `operation_in_progress` flag is required at this time.
-
-  **5. Original Intent vs Current Reality Fidelity Drift**  
-  This will be addressed in the testing stage (not yet designed).
-
-  **Visual Representation on the Canvas (Maturity Spectrum)**  
-  The Canvas renders each node's visual signature as a direct reflection of its maturity column in the SQLite nodes table. The representation is UX-friendly and designed to make pipeline state and potential deadlocks immediately visible:
-  - **1: Conceptual** — Ghost Node (Dashed White): Intent only. Exists in scaffolding but has no physical footprint.
-  - **2: Hollow** — Translucent White (Pulsing): Skeleton phase. Pulse frequency reflects iteration pressure.
-  - **3: Anchored** — Blue Halo (Static): AST reports no problems.
-  - **4: Synthesizing** — Yellow Core (Vibrating): Active synthesis in progress.
-  - **5: Implemented** — Green Solid (Static): Equilibrium. Fully materialized.
-  - **x: Resolving / Broken** — Red, darkening or fading: Indicates deadlock resolution or broken/partial state.
-
-  **Re-entrancy Prevention**  
-  Re-entrancy within the same user command is controlled using node state and iteration count. The LLM is provided with sufficient context (iteration count, synthesis history, and current maturity) to intelligently decide whether to order another attempt at a node.
-
+- **Edge Case Handling:**  
+  1. **Infinite Re-Synthesis Loop**: When additional functionality is needed, distinguish between adding a new function (acceptable, append to scaffolding.yaml + targeted Skeleton) and mutating an existing function (requires blast radius via `graph` + DEEP LLM judgement with three possible verdicts: OK_TO_MUTATE, CREATE_NEW, or REFACTOR). Automatic core extensions limited; after 3 cycles with no progress, mark as `partial_implementation`.  
+  2. **Partial Implementation Staleness**: If a node cannot be fully resolved after three synthesis attempts, mark it as `broken` or `partial_implementation` and move on. The node must remain clearly visible via canvas (red) and `locate` so the root cause can be diagnosed later.  
+  3. **Scaffolding.yaml Growth and Bloat**: Tolerated for now. `scaffolding.yaml` holds packages and files. No proactive consolidation.  
+  4. **Maturity State Conflicts**: Handled by sequential execution (single-user system).  
+  5. **Original Intent vs Current Reality Fidelity Drift**: To be addressed in the future Testing stage.  
+  **Visual Representation on the Canvas (Maturity Spectrum)**:  
+  - 1: Conceptual — Ghost Node (Dashed White)  
+  - 2: Hollow — Translucent White (Pulsing)  
+  - 3: Anchored — Blue Halo (Static)  
+  - 4: Synthesizing — Yellow Core (Vibrating)  
+  - 5: Implemented — Green Solid (Static)  
+  - x: Resolving / Broken — Red, darkening or fading  
 - **Destructive?** **Yes**. It performs physical writes to source code files and updates the genome.
+
