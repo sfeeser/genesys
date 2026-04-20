@@ -132,10 +132,43 @@ These are the standalone **Cobra CLI commands** exposed to users. Each command s
     - Core extensions are applied first, followed by a re-hydration of affected leaf nodes if needed.  
   - After code is written, it triggers a mandatory `verify` pass to detect any drift and confirm consistency.  
   - Updates the genome with new `logic_hash`, `maturity` ("implemented"), and updated dependencies.  
-- **Edge Case Handling:**  
-  - **Core Extension Feedback Loop:** Core-to-leaf ordering is treated as a strong guideline, not an absolute rule. When leaf functionality requires new core behavior, core extensions are allowed. However, to prevent infinite oscillation, each synthesis run tracks a `synthesis_iteration` counter and a `core_extension_count`. Automatic core extensions are limited to a maximum of 2 per synthesis session. After the second extension, further core changes require user confirmation or a manual re-scaffolding. If no measurable progress (new nodes materialized or logic_hash stabilized) occurs after 3 full cycles, the leaf node is implemented with whatever core services are currently available and flagged as “partial_implementation”.  
-  - **Enrich Overwrite Cycle:** The original DEEP intent is preserved. Each node maintains both `original_responsibility` and `original_business_purpose` (never overwritten) as well as `current_responsibility` and `current_business_purpose` fields. This allows later stages to judge how well the implemented code matches the original intent.  
-  - **Verify False-Positive Drift Loop:** Verify behavior is modulated by node maturity level. Nodes in “Synthesizing” state have relaxed drift detection. Verify only flags changes as unauthorized drift when the node is in “Anchored” or “Implemented” maturity.  
-  - **Scaffolding.yaml Desync Loop:** `scaffolding.yaml` is treated as a living document. When core extensions or new files are added during synthesis, new entries are appended to `scaffolding.yaml` with state tracking fields (`state`, `last_modified_by`, `synthesis_version`).  
-  - **Hydrate ↔ Synthesis Ordering Deadlock:** When Synthesis needs to create a brand-new file or package that did not exist in the original scaffolding, it first appends the new node to `scaffolding.yaml` with `state: "planned"`, then triggers a targeted (partial) `hydrate` only for the new nodes. Previously hydrated nodes retain their existing maturity state.  
+
+- **Edge Case Handling:**
+
+  **1. Infinite Re-Hydration / Re-Synthesis Loop**  
+  When Synthesis determines that a node requires additional functionality to fulfill the SpecBook, it must distinguish between two cases:  
+  - **Adding a new function**: This is acceptable and expected. The new function is appended to `scaffolding.yaml` with `state: "planned"`. A targeted (partial) `hydrate` is then called only for the new node(s). This is expected to resolve in one cycle in most cases.  
+  - **Mutating an existing function**: This is potentially dangerous due to blast radius. The following mandatory process is followed:  
+    1. `graph` is automatically called to compute the full blast radius of the proposed mutation.  
+    2. A mutation plan is created containing the proposed change and the list of all affected nodes.  
+    3. This mutation plan is passed to the DEEP LLM for judgement. The LLM must return one of three verdicts:  
+       - **OK to mutate the current node**  
+       - **Not OK to mutate the current node** — create a new function instead  
+       - **Code bloat risk** — explicitly flag the risk and propose a cleaner refactoring approach.  
+  Automatic core extensions are limited. If no measurable progress occurs after 3 full cycles, the leaf node is implemented with whatever core services are currently available and marked as `partial_implementation`.
+
+  **2. Partial Implementation Staleness**  
+  Hydration and Synthesis must maintain clear state for each node. If a node cannot be fully resolved after three synthesis attempts, the process halts for that node, marks it as `broken` (or `partial_implementation`), and moves on. The critical requirement is visibility: the node must be clearly discoverable as broken via telemetry/visual canvas (red node) and `locate` / `hunt` so the root cause can be identified and addressed later.
+
+  **3. Scaffolding.yaml Growth and Bloat**  
+  `scaffolding.yaml` holds packages and Go files, not individual nodes. Some bloat from incremental core extensions will be tolerated. We will not proactively consolidate or add `deprecated` / `superseded_by` fields at this time. Gatekeeper and Scaffolding must handle a growing scaffolding file gracefully.
+
+  **4. Maturity State Conflicts During Concurrent Operations**  
+  Genesis is a single-user system. All operations will be processed sequentially. No node-level locking or global `operation_in_progress` flag is required at this time.
+
+  **5. Original Intent vs Current Reality Fidelity Drift**  
+  This will be addressed in the testing stage (not yet designed).
+
+  **Visual Representation on the Canvas (Maturity Spectrum)**  
+  The Canvas renders each node's visual signature as a direct reflection of its maturity column in the SQLite nodes table. The representation is UX-friendly and designed to make pipeline state and potential deadlocks immediately visible:
+  - **1: Conceptual** — Ghost Node (Dashed White): Intent only. Exists in scaffolding but has no physical footprint.
+  - **2: Hollow** — Translucent White (Pulsing): Skeleton phase. Pulse frequency reflects iteration pressure.
+  - **3: Anchored** — Blue Halo (Static): AST reports no problems.
+  - **4: Synthesizing** — Yellow Core (Vibrating): Active synthesis in progress.
+  - **5: Implemented** — Green Solid (Static): Equilibrium. Fully materialized.
+  - **x: Resolving / Broken** — Red, darkening or fading: Indicates deadlock resolution or broken/partial state.
+
+  **Re-entrancy Prevention**  
+  Re-entrancy within the same user command is controlled using node state and iteration count. The LLM is provided with sufficient context (iteration count, synthesis history, and current maturity) to intelligently decide whether to order another attempt at a node.
+
 - **Destructive?** **Yes**. It performs physical writes to source code files and updates the genome.
