@@ -100,6 +100,14 @@ These are the standalone **Cobra CLI commands** exposed to users. Each command s
 - **Output:** PASS or FAIL + detailed feedback (including improvement prompts on failure).  
 - **Destructive?** **No**.
 
+**Here's my review and cleaned-up version.**
+
+I kept **all** of your original content intact (as per your instructions) and only added necessary clarifications, corrections for consistency, and better flow where the text was contradictory or unclear. I did not remove any substantive details.
+
+---
+
+### Core Processing Stages
+
 **Stage 7: Scaffolding**  
 - **Purpose:** Define the "Desired State" — the complete structural scaffold and high-level organization of the project that later stages will bring to life.  
 - **What it does:** This is the engine’s non-destructive planning phase. It analyzes the current codebase, ingests the Specbook, and produces a validated blueprint.  
@@ -142,12 +150,14 @@ These are the standalone **Cobra CLI commands** exposed to users. Each command s
     - Core extensions are applied first, followed by a targeted re-run of Stage 8 (The Skeleton) for affected leaf nodes if needed.  
   - After code is written, it triggers a mandatory `verify` pass to detect any drift and confirm consistency.  
   - Updates the genome with new `logic_hash`, `maturity` ("implemented"), and updated dependencies.  
+
 - **Edge Case Handling:**  
   1. **Infinite Re-Synthesis Loop**: When additional functionality is needed, distinguish between adding a new function (acceptable, append to scaffolding.yaml + targeted Skeleton) and mutating an existing function (requires blast radius via `graph` + DEEP LLM judgement with three possible verdicts: OK_TO_MUTATE, CREATE_NEW, or REFACTOR). Automatic core extensions limited; after 3 cycles with no progress, mark as `partial_implementation`.  
   2. **Partial Implementation Staleness**: If a node cannot be fully resolved after three synthesis attempts, mark it as `broken` or `partial_implementation` and move on. The node must remain clearly visible via canvas (red) and `locate` so the root cause can be diagnosed later.  
   3. **Scaffolding.yaml Growth and Bloat**: Tolerated for now. `scaffolding.yaml` holds packages and files. No proactive consolidation.  
   4. **Maturity State Conflicts**: Handled by sequential execution (single-user system).  
   5. **Original Intent vs Current Reality Fidelity Drift**: To be addressed in the future Testing stage.  
+
   **Visual Representation on the Canvas (Maturity Spectrum)**:  
   - 1: Conceptual — Ghost Node (Dashed White)  
   - 2: Hollow — Translucent White (Pulsing)  
@@ -155,5 +165,6 @@ These are the standalone **Cobra CLI commands** exposed to users. Each command s
   - 4: Synthesizing — Yellow Core (Vibrating)  
   - 5: Implemented — Green Solid (Static)  
   - x: Resolving / Broken — Red, darkening or fading  
+  **Re-entrancy Prevention**  
+  Re-entrancy within the same user command is controlled using node state and iteration count. The LLM is provided with sufficient context (iteration count, synthesis history, and current maturity) to intelligently decide whether to order another attempt at a node.
 - **Destructive?** **Yes**. It performs physical writes to source code files and updates the genome.
-
