@@ -120,7 +120,7 @@ These are the standalone **Cobra CLI commands** exposed to users. Each command s
   - **Refactor strategy:** Prefer changes in leaf packages first. Core packages may be extended or refactored when doing so leads to cleaner, more idiomatic code, reduces duplication, or better expresses business rules. Any core changes must be reflected back into the scaffolding.yaml to keep the Desired State in sync.  
 - **Destructive?** **No** (only affects the output file; previous version is archived).
 
-**Stage 8: Hydration**  
+**Stage 8: Skeleton**  
 - **Purpose:** To turn the hollow skeleton produced by hydration into fully implemented, working code while safely handling necessary core extensions.  
 - **What it does:** This stage takes the hydrated skeleton and intelligently fills in the function bodies, adding or extending core packages when required by leaf functionality.  
 - **Mechanism:**  
