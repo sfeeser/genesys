@@ -110,6 +110,9 @@ These stages are the only place in the entire Genesis Engine where the **coding 
 ### Core Principles for Stages 7–9
 
 - The coding agent operates **exclusively via MCP-style tool calls**. It never receives giant context dumps.
+- Every response must end with a === GENESIS CONTINUATION DIRECTIVE === block (the state forwarder).
+- The Genesis orchestrator treats this directive as the single source of truth for “what happens next.”
+- Node Biography + Scaffold Graph + Continuation Directive together provide ongoing knowledge of the project state.
 - Every decision is made with **on-demand context** pulled via the seven tools listed below.
 - The **Node Biography** (Stateful History & Telemetry) is recorded for every node so the agent can see its own past actions and avoid endless looping or regressions.
 - Every materialization step (write to code) is followed **immediately** by `enrich` so the Genome stays perfectly synchronized with physical AST.
@@ -143,7 +146,7 @@ Real senior engineers ask questions when they need information. The coding agent
 - `project_health_score` (at time of last action)
 - `coreness` — stored as string `"x-y"`
 
-### 15.1 The Scaffold Graph (Authoritative Blueprint)
+### The Scaffold Graph (Authoritative Blueprint)
 
 - Built purely from the SpecBook (plus any existing code if present).
 - Lives permanently in the Registry (dedicated tables: `scaffold_nodes`, `scaffold_edges`, `scaffold_revisions`, `scaffold_scc`).
@@ -152,7 +155,7 @@ Real senior engineers ask questions when they need information. The coding agent
 - Is versioned via graph revisions exactly like the Genome.
 - Serves as the map the coding agent follows for all materialization and mutation decisions.
 
-### 15.2 The Canvas (Observational Layer Only)
+### The Canvas (Observational Layer Only)
 
 - Purely read-only kinetic visualization served on `localhost:8080`.
 - Renders the Scaffold Graph + Genome state with maturity colors, vibration, tension lines, SCC blobs, sovereignty shockwaves, etc.
@@ -171,7 +174,7 @@ Real senior engineers ask questions when they need information. The coding agent
 5. Agent exports/updates the human-readable `scaffolding.yaml`.
 6. Records initial `growth_history` entries for all new scaffold nodes.
 
-**Exit Condition:** Scaffold Graph is now the single source of truth. **No files have been written to disk yet.**
+**Exit Condition:** Scaffold Graph is now the single source of truth. **No files have been written to disk yet.** After writing the Scaffold Graph, the agent outputs its Continuation Directive with next_action: "hydrate" or next_action: "pause_for_human".
 
 ### 15.4 Stage 8 – The Skeleton (Agent-Driven Hollow Materialization + Genome Bootstrap)
 
@@ -212,6 +215,12 @@ Real senior engineers ask questions when they need information. The coding agent
      - Records success in `synthesis_outcome_history`.
      - Canvas updates (yellow vibrating → green solid).
 4. **Loop-prevention rule:** After 3 failed attempts on the same node or SCC, the agent records a final `white_blood_cell_attack`, pauses, and surfaces an UNSAT condition with the minimal conflict set (using `get_blast_radius` and `get_related_nodes`).
+5. After every synthesis attempt (success or failure): the agent must output a Continuation Directive telling the orchestrator exactly what to do next (continue, retry, pause, raise UNSAT, propose graph delta, etc.).
+    - State Forwarder Mechanics (Orchestrator Side)
+       - The Go engine listens for the === GENESIS CONTINUATION DIRECTIVE === marker.
+       - It validates and stores the directive.
+       - It immediately prepares the next AI call using the directive’s instructions.
+       - This creates a clean, deterministic hand-off between stateless prompts while giving the AI full agency over its own workflow.
 
 **Termination Conditions:**
 - All nodes in the current Scaffold Graph revision reach `implemented` maturity, or
