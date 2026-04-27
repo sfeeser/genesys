@@ -9,9 +9,12 @@ Chapter 6: The Hexagonal Gates
 Chapter 7: The Canvas  
 Chapter 8: The Mechanical Delivery  
 Chapter 9: The Agentic Loop  
-Chapter 10: The Greenfield Protocol
+Chapter 10: The Greenfield Protocol  
 Chapter 11: The Architectural Preflight  
 Chapter 12: Package Topology & Dependency Law  
+Chapter 13: The Cognitive Tier Split  
+Chapter 14: The Command Surface  
+Chapter 15: Stages 7–9 – The Intelligent Coding Agent
 
 # **Chapter 1: The Genesis Manifesto (v7.0 - RELEASE)**
 
@@ -21,13 +24,13 @@ Genesis is a **Bounded Synthesis System** that transforms architectural intent i
 ## **1.2. The Authority Stack**
 To resolve architectural drift, Genesis enforces a three-tier hierarchy:
 1.  **The Specbook (Normative Authority):** The immutable source of truth for architectural intent.
-2.  **The Registry Engine (Physical Authority):** A local-first, relational database (`.genesis/genome.db`) that enforces the physical state, graph structure, and convergence metadata.
-3.  **The Canvas (Observational Authority):** A kinetic, read-only visualization of the Registry Engine's state.
+2.  **The Registry Engine (Physical Authority):** A local-first, relational database (`.genesis/genome.db`) that enforces the physical state, graph structure, Scaffold Graph, and convergence metadata.
+3.  **The Canvas (Observational Authority):** A kinetic, read-only visualization of the Registry Engine’s state, Scaffold Graph, and real-time Node Biography events.
 
 ## **1.3. The DNA Registry: Structural & Semantic**
 The Registry Engine replaces flat-file manifests with a relational model to manage complexity at scale:
-* **The Structural Genome:** Persists the **Identity Quad**, typed dependency edges, and **SCC (Strongly Connected Component)** clusters. It acts as the "Hard Physics" layer.
-* **The Semantic Index:** A non-authoritative, advisory vector index stored within the engine. It enables heuristic **Search-by-Intent** via local inference. **Note:** All index selections are advisory and must be validated by the Structural Genome and the Acceptance Envelope.
+* **The Structural Genome:** Persists the **Identity Quad**, typed dependency edges, **Scaffold Graph**, and **SCC (Strongly Connected Component)** clusters. It acts as the "Hard Physics" layer.
+* **The Semantic Index:** A non-authoritative, advisory vector index stored within the engine. It enables heuristic **Search-by-Intent** via local inference. All index selections are advisory and must be validated by the Structural Genome and the Acceptance Envelope.
 * **The Audit Export:** The engine generates a **Canonical Audit Export** (YAML/JSON) to provide a deterministic, human-readable trail for version control and peer review.
 
 ## **1.4. The Identity Quad: Environment-Stable Determinism**
@@ -37,39 +40,53 @@ Every node is anchored by four immutable dimensions:
 * **L-ID (Logic):** SHA-256 of the normalized, order-independent AST.
 * **D-ID (Dependency/Environment):** A recursive digest of the transitive dependency graph, `go.sum` hash, toolchain version, and explicit build context (**GOOS, GOARCH, tags, and flags**).
 
-## **1.5. The Convergence Controller (CRA 3.0)**
-The CRA is a **Bounded Optimization Solver** that treats SCCs as atomic mutation units.
-* **Atomic SCC Mutation:** Within a cycle, the CRA performs a coordinated multi-node resolution. Partial updates are prohibited; the SCC must converge as a batch.
-* **Authority Partitioning:** The solver is strictly bound by node authority. It cannot mutate Class-0 (Immutable) nodes to solve a conflict; it must warp negotiable nodes or suggest topology changes.
+## **1.5. The Convergence Controller (CRA) & Intelligent Coding Agent**
+The Convergence Controller (CRA) is a **Bounded Optimization Solver** that treats SCCs as atomic mutation units. In Stages 7–9 it is embodied by the **Intelligent Coding Agent** — a tool-calling DEEP LLM that operates as a collaborative sidekick.
+
+* **Atomic SCC Mutation:** Within a cycle, the CRA/agent performs coordinated multi-node resolution. Partial updates are prohibited.
+* **Authority Partitioning:** The agent is strictly bound by node authority. It cannot mutate Class-0 (Immutable) nodes; it must warp negotiable nodes or propose explicit topology changes via the Scaffold Graph.
+* **Tool-Use Discipline:** The coding agent never receives giant context dumps. It operates exclusively through MCP-style tool calls and must end every response with a **Continuation Directive** that tells the orchestrator exactly what to do next.
 
 ## **1.6. The Agentic Development Pipeline**
 Genesis follows a strictly governed, transactional execution flow:
+
 1.  **DRAFT:** Heuristic discovery via Semantic Index.
-2.  **GRAPH:** Deterministic "Blast Radius" calculation via relational queries.
-3.  **PLAN:** A **CRA-governed optimization cycle** generating code in a VFS sandbox.
-4.  **APPLY:** A **Transactional Batch Surgery** that splices code and updates the Registry. If any gate fails, the transaction rolls back.
+2.  **GRAPH:** Deterministic "Blast Radius" and coreness (`x-y`) calculation via relational queries.
+3.  **SCAFFOLD (Stage 7):** Construction of the authoritative Scaffold Graph.
+4.  **SKELETON (Stage 8):** Agent-driven hollow materialization via the Surgical Inner Loop, immediately followed by `enrich`.
+5.  **SYNTHESIS (Stage 9):** Intelligent implementation loop where the coding agent uses tools, performs targeted surgery, records Node Biography, and issues Continuation Directives.
+6.  **APPLY:** Transactional Batch Surgery that splices code and updates the Registry. If any Hexagonal Gate fails, the transaction rolls back.
 
 ## **1.7. The Hexagonal Acceptance Envelope**
 All synthesis must pass the **Hexagonal Gates**: **Gate A** (Physics), **Gate B** (Identity Coherence), **Gate C** (Behavioral Invariants), **Gate D** (Compilation), **Gate E** (Canonical Replay), and **Gate F** (Cost/Complexity).
 
 ## **1.8. The Kinetic Canvas & Convergence Graph**
-The Canvas renders a **Convergence Graph** derived from the Registry Engine’s dependency data.
-* **SCC Compression:** Tightly coupled cyclic regions are visually collapsed into "Blobs" to represent atomic mutation units.
-* **Kinetic Telemetry:** Observational signals—**Pulse** (iteration pressure) and **Vibration** (instability)—allow the developer to monitor the "Virtual Loom" without interrupting the solver.
+The Canvas renders a **Convergence Graph** derived from the Registry Engine’s dependency data, Scaffold Graph, and Node Biography.
 
+* **SCC Compression:** Tightly coupled cyclic regions are visually collapsed into "Blobs" to represent atomic mutation units.
+* **Kinetic Telemetry:** Observational signals — **Pulse** (iteration pressure), **Vibration** (instability), and biography events — allow the developer to monitor the "Virtual Loom" and the coding agent’s progress in real time.
+* **State Forwarding:** The Canvas reflects the results of every Continuation Directive issued by the coding agent.
+
+---
 
 # **Chapter 2: The DNA Registry (Final Hardening)**
 
 ## **2.1. Registry Physical Architecture**
-The Registry is a single SQLite 3 database (`.genesis/genome.db`). 
+The Registry is a single SQLite 3 database (`.genesis/genome.db`).
+### **The Canonical Audit Export (Law) — Updated**
+`genome.json` is now the **primary, canonical, Git-auditable source of truth**.  
+Any operation that commits a change to the SQLite DB **must** trigger a deterministic, sorted export to `.genesis/genome.json`.
 
-### **The Canonical Audit Export (Law)**
-Any operation that commits a change to the SQLite DB must trigger a deterministic, sorted YAML export to `genome.yaml`. This ensures that **Git** remains the auditor of the binary engine's state.
+- The JSON contains the complete state of the Genome + Scaffold Graph.
+- SQLite DB is treated as a **derived runtime cache** that can be rebuilt on demand from `genome.json`.
+- `save-genome` command (automatic or manual) guarantees perfect synchronization.
+- `.genesis/genome.db` is listed in `.gitignore`.
 
-## **2.2. The Hardened Schema**
+**Rebuild Rule:** On startup of any command, if `genome.json` exists and its `export_hash` does not match the DB, the engine deletes the current DB and fully rebuilds it from the JSON.
 
-### **A. Metadata (The Environment Singleton)**
-We have tightened the singleton to include full build provenance and session verification.
+### **2.2. The Hardened Schema**
+
+#### **A. Metadata (The Environment Singleton)**
 
 ```sql
 CREATE TABLE metadata (
@@ -84,17 +101,17 @@ CREATE TABLE metadata (
     module_graph_hash TEXT NOT NULL,
     workspace_mode TEXT NOT NULL,
     last_sequence_hash TEXT NOT NULL,
-    schema_version TEXT NOT NULL DEFAULT 'v7'
+    schema_version TEXT NOT NULL DEFAULT 'v7',
+    export_hash TEXT,           -- SHA-256 of genome.json
+    export_timestamp DATETIME
 );
 ```
 
-### **B. Nodes (State-Aware Integrity)**
-We have componentized the NodeID and added state-based nullability rules to be enforced by Chapter 3 logic.
+#### **B. Nodes (State-Aware Integrity)**
 
 ```sql
 CREATE TABLE nodes (
     node_id TEXT PRIMARY KEY,
-    
     -- COMPONENTIZED IDENTITY
     kind TEXT NOT NULL,
     visibility TEXT NOT NULL,
@@ -105,12 +122,12 @@ CREATE TABLE nodes (
     arity INTEGER NOT NULL,
 
     -- THE IDENTITY QUAD
-    contract_id TEXT,         -- Required for maturity >= 'anchored'
-    canonical_contract TEXT,  -- Required for maturity >= 'anchored'
-    logic_hash TEXT,          -- Required for maturity == 'sequenced'
-    dependency_hash TEXT,     -- Required for maturity == 'sequenced'
+    contract_id TEXT,
+    canonical_contract TEXT,
+    logic_hash TEXT,
+    dependency_hash TEXT,
 
-    maturity TEXT NOT NULL CHECK (maturity IN ('draft', 'hollow', 'anchored', 'hydrated', 'sequenced')),
+    maturity TEXT NOT NULL CHECK (maturity IN ('draft', 'hollow', 'anchored', 'hydrated', 'sequenced', 'implemented')),
     authority_class INTEGER NOT NULL CHECK (authority_class IN (0,1,2)),
     gene TEXT,
     business_purpose TEXT,
@@ -118,19 +135,18 @@ CREATE TABLE nodes (
 );
 ```
 
-### **C. The Graph & SCC Model (Revision-Synced)**
-We have unified `graph_revision` and `graph_hash` to eliminate redundancy and ensured SCC membership is explicitly revision-scoped.
+#### **C. The Graph & SCC Model (Revision-Synced)**
 
 ```sql
 CREATE TABLE graph_revisions (
-    graph_hash TEXT PRIMARY KEY, -- SHA-256 of the total edge set
+    graph_hash TEXT PRIMARY KEY,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE edges (
     source_node_id TEXT NOT NULL,
-    target_node_id TEXT,           -- Internal
-    target_external_symbol TEXT,   -- External
+    target_node_id TEXT,
+    target_external_symbol TEXT,
     edge_kind TEXT NOT NULL,
     graph_hash TEXT NOT NULL,
     PRIMARY KEY (source_node_id, target_node_id, target_external_symbol, edge_kind, graph_hash),
@@ -157,8 +173,7 @@ CREATE TABLE scc_cluster_members (
 );
 ```
 
-### **D. Semantic Provenance (The Record Bridge)**
-Vectors are no longer "floating." They are bound to a specific node AND a specific inference profile.
+#### **D. Semantic Provenance (The Record Bridge)**
 
 ```sql
 CREATE TABLE inference_profiles (
@@ -190,6 +205,59 @@ CREATE VIRTUAL TABLE semantic_index USING vss0(
 );
 ```
 
+#### **E. Scaffold Graph (New — Authoritative Blueprint)**
+
+```sql
+CREATE TABLE scaffold_revisions (
+    revision_hash TEXT PRIMARY KEY,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    specbook_hash TEXT NOT NULL
+);
+
+CREATE TABLE scaffold_nodes (
+    scaffold_id TEXT PRIMARY KEY,
+    kind TEXT NOT NULL CHECK (kind IN ('package', 'file', 'node')),
+    package_path TEXT NOT NULL,
+    file_path TEXT,
+    symbol TEXT,
+    responsibility TEXT NOT NULL,
+    maturity TEXT NOT NULL,
+    authority_class INTEGER NOT NULL CHECK (authority_class IN (0,1,2)),
+    embedding BLOB,                    -- 3072-dim vector stored as blob
+    revision_hash TEXT NOT NULL,
+    FOREIGN KEY (revision_hash) REFERENCES scaffold_revisions(revision_hash)
+);
+
+CREATE TABLE scaffold_edges (
+    source_scaffold_id TEXT NOT NULL,
+    target_scaffold_id TEXT NOT NULL,
+    edge_kind TEXT NOT NULL,
+    weight INTEGER DEFAULT 50,
+    revision_hash TEXT NOT NULL,
+    PRIMARY KEY (source_scaffold_id, target_scaffold_id, edge_kind, revision_hash),
+    FOREIGN KEY (revision_hash) REFERENCES scaffold_revisions(revision_hash)
+);
+
+CREATE TABLE scaffold_scc_defs (
+    cluster_id TEXT NOT NULL,
+    revision_hash TEXT NOT NULL,
+    node_count INTEGER NOT NULL,
+    PRIMARY KEY (cluster_id, revision_hash),
+    FOREIGN KEY (revision_hash) REFERENCES scaffold_revisions(revision_hash)
+);
+
+CREATE TABLE scaffold_scc_members (
+    cluster_id TEXT NOT NULL,
+    revision_hash TEXT NOT NULL,
+    scaffold_id TEXT NOT NULL,
+    PRIMARY KEY (cluster_id, revision_hash, scaffold_id),
+    FOREIGN KEY (cluster_id, revision_hash) REFERENCES scaffold_scc_defs(cluster_id, revision_hash),
+    FOREIGN KEY (scaffold_id) REFERENCES scaffold_nodes(scaffold_id)
+);
+```
+
+#### **F. Mutation Workset (Solver Workspace)**
+
 ## **2.3. Transactional Enforcement (The Solver Workspace)**
 To guarantee SCC atomicity and environment safety:
 
@@ -197,6 +265,297 @@ To guarantee SCC atomicity and environment safety:
 2.  **The Mutation Workset:** The CRA does not update `nodes` directly. It writes to a `mutation_worksets` table.
     * **The Finalization Gate:** A trigger on the workset verifies that if any node in an SCC is being mutated, **all** members of that SCC (for the current `graph_hash`) must be present in the workset with a valid state transition.
     * **Atomic Flush:** Only upon 100% SCC completeness and **Hexagonal Gate** approval is the workset flushed to the `nodes` table.
+
+**Yes — here is the complete, consolidated specification you requested.**
+
+### New Feature: save-genome (JSON as Primary Source of Truth)
+
+**Chapter 2.4 – Canonical JSON Export & On-Demand Rebuild (save-genome)**
+
+**Core Principle**  
+`genome.json` is now the **canonical, Git-auditable source of truth**. The SQLite database (`.genesis/genome.db`) is a derived runtime cache that can be rebuilt on demand from the JSON.
+
+**save-genome Command**
+- Triggered automatically after any mutation that reaches State 5 (Sequenced) or after `enrich`, `verify`, `scaffold`, `hydrate`, or `synthesize`.
+- Always produces a **deterministic, sorted, pretty-printed** `genome.json` in `.genesis/genome.json`.
+- Contains every table in the Registry + Scaffold Graph (vectors base64-encoded).
+- Includes a top-level `export_hash` (SHA-256 of the sorted content) and `export_timestamp`.
+
+**Rebuild Rule**  
+Any command (`init`, `enrich`, `scaffold`, etc.) first checks for `genome.json`. If the JSON exists and its `export_hash` differs from the DB, the engine **deletes the DB and rebuilds it entirely** from the JSON before proceeding. This makes the DB disposable and guarantees perfect synchronization with Git.
+
+**Git Workflow**  
+- `genome.json` is committed to the repo.
+- `.genesis/genome.db` is **ignored** in `.gitignore`.
+- After `git pull`, the next Genesis command automatically rebuilds the DB from the JSON.
+
+This eliminates any chicken-and-egg or drift issues and makes the entire project state reviewable in pull requests.
+
+---
+
+### Complete SQL Schemas (All Tables)
+
+```sql
+-- 1. Metadata (Environment Singleton)
+CREATE TABLE metadata (
+    singleton INTEGER PRIMARY KEY CHECK (singleton = 1),
+    go_version TEXT NOT NULL,
+    goos TEXT NOT NULL,
+    goarch TEXT NOT NULL,
+    build_tags_json TEXT NOT NULL,
+    build_flags_json TEXT NOT NULL,
+    cgo_enabled INTEGER NOT NULL CHECK (cgo_enabled IN (0,1)),
+    go_sum_hash TEXT NOT NULL,
+    module_graph_hash TEXT NOT NULL,
+    workspace_mode TEXT NOT NULL,
+    last_sequence_hash TEXT NOT NULL,
+    schema_version TEXT NOT NULL DEFAULT 'v7',
+    export_hash TEXT,
+    export_timestamp DATETIME
+);
+
+-- 2. Nodes (Core Genome)
+CREATE TABLE nodes (
+    node_id TEXT PRIMARY KEY,
+    kind TEXT NOT NULL,
+    visibility TEXT NOT NULL,
+    module_path TEXT NOT NULL,
+    package_path TEXT NOT NULL,
+    receiver TEXT NOT NULL CHECK (receiver IN ('none', 'pointer', 'value')),
+    symbol_name TEXT NOT NULL,
+    arity INTEGER NOT NULL,
+    contract_id TEXT,
+    canonical_contract TEXT,
+    logic_hash TEXT,
+    dependency_hash TEXT,
+    maturity TEXT NOT NULL CHECK (maturity IN ('draft', 'hollow', 'anchored', 'hydrated', 'sequenced', 'implemented')),
+    authority_class INTEGER NOT NULL CHECK (authority_class IN (0,1,2)),
+    gene TEXT,
+    business_purpose TEXT,
+    last_audit_timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 3. Graph Revisions
+CREATE TABLE graph_revisions (
+    graph_hash TEXT PRIMARY KEY,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 4. Edges
+CREATE TABLE edges (
+    source_node_id TEXT NOT NULL,
+    target_node_id TEXT,
+    target_external_symbol TEXT,
+    edge_kind TEXT NOT NULL,
+    graph_hash TEXT NOT NULL,
+    PRIMARY KEY (source_node_id, target_node_id, target_external_symbol, edge_kind, graph_hash),
+    FOREIGN KEY (source_node_id) REFERENCES nodes(node_id),
+    FOREIGN KEY (graph_hash) REFERENCES graph_revisions(graph_hash)
+);
+
+-- 5. SCC Definitions & Members
+CREATE TABLE scc_cluster_defs (
+    cluster_id TEXT NOT NULL,
+    graph_hash TEXT NOT NULL,
+    authority_partitioned INTEGER NOT NULL,
+    node_count INTEGER NOT NULL,
+    PRIMARY KEY (cluster_id, graph_hash),
+    FOREIGN KEY (graph_hash) REFERENCES graph_revisions(graph_hash)
+);
+
+CREATE TABLE scc_cluster_members (
+    cluster_id TEXT NOT NULL,
+    graph_hash TEXT NOT NULL,
+    node_id TEXT NOT NULL,
+    PRIMARY KEY (cluster_id, graph_hash, node_id),
+    FOREIGN KEY (cluster_id, graph_hash) REFERENCES scc_cluster_defs(cluster_id, graph_hash),
+    FOREIGN KEY (node_id) REFERENCES nodes(node_id)
+);
+
+-- 6. Inference Profiles & Semantic Records
+CREATE TABLE inference_profiles (
+    profile_id TEXT PRIMARY KEY,
+    tier TEXT NOT NULL CHECK (tier IN ('FAST', 'DEEP', 'EMBED')),
+    model_name TEXT NOT NULL,
+    model_revision TEXT NOT NULL,
+    dimensions INTEGER NOT NULL,
+    distance_metric TEXT NOT NULL DEFAULT 'cosine',
+    summary_schema_version TEXT NOT NULL,
+    summary_prompt_hash TEXT NOT NULL,
+    chunking_policy TEXT NOT NULL,
+    normalization_policy TEXT NOT NULL
+);
+
+CREATE TABLE semantic_records (
+    record_id INTEGER PRIMARY KEY,
+    node_id TEXT NOT NULL,
+    profile_id TEXT NOT NULL,
+    summary_hash TEXT NOT NULL,
+    is_stale INTEGER NOT NULL CHECK (is_stale IN (0,1)),
+    FOREIGN KEY (node_id) REFERENCES nodes(node_id),
+    FOREIGN KEY (profile_id) REFERENCES inference_profiles(profile_id)
+);
+
+CREATE VIRTUAL TABLE semantic_index USING vss0(
+    record_id INTEGER,
+    vector(3072)
+);
+
+-- 7. Scaffold Graph Tables (New in v7)
+CREATE TABLE scaffold_revisions (
+    revision_hash TEXT PRIMARY KEY,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    specbook_hash TEXT NOT NULL
+);
+
+CREATE TABLE scaffold_nodes (
+    scaffold_id TEXT PRIMARY KEY,
+    kind TEXT NOT NULL CHECK (kind IN ('package', 'file', 'node')),
+    package_path TEXT NOT NULL,
+    file_path TEXT,
+    symbol TEXT,
+    responsibility TEXT NOT NULL,
+    maturity TEXT NOT NULL,
+    authority_class INTEGER NOT NULL CHECK (authority_class IN (0,1,2)),
+    embedding BLOB,                    -- 3072-dim vector as blob
+    revision_hash TEXT NOT NULL,
+    FOREIGN KEY (revision_hash) REFERENCES scaffold_revisions(revision_hash)
+);
+
+CREATE TABLE scaffold_edges (
+    source_scaffold_id TEXT NOT NULL,
+    target_scaffold_id TEXT NOT NULL,
+    edge_kind TEXT NOT NULL,
+    weight INTEGER DEFAULT 50,
+    revision_hash TEXT NOT NULL,
+    PRIMARY KEY (source_scaffold_id, target_scaffold_id, edge_kind, revision_hash),
+    FOREIGN KEY (revision_hash) REFERENCES scaffold_revisions(revision_hash)
+);
+
+CREATE TABLE scaffold_scc_defs (
+    cluster_id TEXT NOT NULL,
+    revision_hash TEXT NOT NULL,
+    node_count INTEGER NOT NULL,
+    PRIMARY KEY (cluster_id, revision_hash),
+    FOREIGN KEY (revision_hash) REFERENCES scaffold_revisions(revision_hash)
+);
+
+CREATE TABLE scaffold_scc_members (
+    cluster_id TEXT NOT NULL,
+    revision_hash TEXT NOT NULL,
+    scaffold_id TEXT NOT NULL,
+    PRIMARY KEY (cluster_id, revision_hash, scaffold_id),
+    FOREIGN KEY (cluster_id, revision_hash) REFERENCES scaffold_scc_defs(cluster_id, revision_hash),
+    FOREIGN KEY (scaffold_id) REFERENCES scaffold_nodes(scaffold_id)
+);
+```
+
+---
+
+### Go Structs for the Agent (All Major Types)
+
+```go
+// internal/registry/models.go
+type Node struct { /* mirrors nodes table */ }
+type Edge struct { /* mirrors edges */ }
+type SCCCluster struct { /* mirrors scc_* */ }
+
+// internal/scaffold/models.go
+type ScaffoldNode struct {
+    ScaffoldID     string
+    Kind           string // package | file | node
+    PackagePath    string
+    FilePath       string
+    Symbol         string
+    Responsibility string
+    Maturity       string
+    AuthorityClass int
+    Embedding      []float32 // 3072-dim
+    RevisionHash   string
+}
+
+type ScaffoldEdge struct {
+    SourceID   string
+    TargetID   string
+    EdgeKind   string
+    Weight     int
+    RevisionHash string
+}
+
+// internal/synthesis/tools.go  (Agent-facing types)
+type ToolCaller interface {
+    GetNode(ctx context.Context, nodeID string) (*NodeDetail, error)
+    GetNodeHistory(ctx context.Context, nodeID string) (*History, error)
+    GetOriginalSpec(ctx context.Context, nodeID string) (string, error)
+    GetRelatedNodes(ctx context.Context, nodeID string, limit int) ([]*RelatedNode, error)
+    GetProjectHealth(ctx context.Context) (*HealthSummary, error)
+    GetPreviousReasoning(ctx context.Context, nodeID string) ([]ReasoningEntry, error)
+    GetBlastRadius(ctx context.Context, nodeID string) (*BlastRadius, error)
+    GetNodeCode(ctx context.Context, nodeID string) (string, error)
+    SearchIntent(ctx context.Context, query string) ([]*SearchResult, error)
+}
+
+type NodeDetail struct {
+    NodeID          string
+    Maturity        string
+    Authority       int
+    Contract        string
+    BusinessPurpose string
+    CurrentCode     string
+}
+
+type History struct {
+    SynthesisAttempts []Attempt
+    Failures          []Failure
+    LastSuccess       *Attempt
+}
+
+type RelatedNode struct {
+    NodeID   string
+    Relation string // calls / called_by / same_scc / same_package
+    Maturity string
+    Distance int
+}
+
+type HealthSummary struct {
+    OverallScore  float64
+    StuckNodes    int
+    SCCsInTension int
+    DriftNodes    int
+    Message       string
+}
+
+type ReasoningEntry struct {
+    Timestamp     string
+    PromptSummary string
+    Decision      string
+    Outcome       string
+}
+
+type BlastRadius struct {
+    DirectImpact []string
+    Downstream   []string
+    RiskLevel    string
+}
+
+type SearchResult struct {
+    ScaffoldID string
+    Score      float64
+    Snippet    string
+}
+```
+
+
+---
+---
+---
+
+
+
+
+
+
+
 
 
 # **Chapter 3: The Metamorphosis Pipeline**
